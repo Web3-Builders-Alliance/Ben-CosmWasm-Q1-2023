@@ -1,3 +1,8 @@
+// A run through of Callum's CosmWasm Zero to Hero tutorial
+
+// @japarjam
+// @bgoober (test comment)
+
 #[cfg(not(feature = "library"))]
 // import entry points from cosmwasm_std
 use cosmwasm_std::entry_point;
