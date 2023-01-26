@@ -1,7 +1,8 @@
 // Vectors in Rust
 
 /*
-Vectors are resizable arrays.
+Vectors are resizable arrays, though they can contain multiple data types, just like a tuple.
+A vector is an extensible tuple.
 */
 
 // import mem from standard library
