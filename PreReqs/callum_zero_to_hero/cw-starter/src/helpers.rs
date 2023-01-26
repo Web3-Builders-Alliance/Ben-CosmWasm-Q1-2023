@@ -1,22 +1,30 @@
 // allow unused imports
 #![allow(unused_imports)]
+
+// import dependencies
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+// import dependencies from cosmwasm_std library
 use cosmwasm_std::{to_binary, Addr, CosmosMsg, StdResult, WasmMsg};
 
+// import crate dependencies from msg.rs file
 use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 /// CwTemplateContract is a wrapper around Addr that provides a lot of helpers
 /// for working with this. Rename it to your contract name.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+
+// define a public struct called CwTemplateContract with a single field called pub Addr which is the address of the contract
 pub struct CwTemplateContract(pub Addr);
 
+// implement CwTemplateContract
 impl CwTemplateContract {
     pub fn addr(&self) -> Addr {
         self.0.clone()
     }
 
+    // define the call function with allows for a WasmMsg to execute contract messages
     pub fn call<T: Into<ExecuteMsg>>(&self, msg: T) -> StdResult<CosmosMsg> {
         let msg = to_binary(&msg.into())?;
         Ok(WasmMsg::Execute {

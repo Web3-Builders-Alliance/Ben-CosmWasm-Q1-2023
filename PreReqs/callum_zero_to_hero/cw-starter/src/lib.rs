@@ -1,3 +1,5 @@
+// modules used by the contract
+
 pub mod contract;
 mod error;
 pub mod helpers;
