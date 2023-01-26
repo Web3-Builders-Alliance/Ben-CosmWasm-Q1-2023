@@ -7,7 +7,7 @@ use cw_storage_plus::{Item, Map};
 // derive traits and create config struct with an admin address
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Config {
-    pub admin: Addr
+    pub admin: Addr,
 }
 
 // derive traits and create poll struct with a creator address, title, question, and options
