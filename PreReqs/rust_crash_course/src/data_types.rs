@@ -10,11 +10,11 @@ Compound Types:
     - Tuples
     - Arrays
 
-The compiler must know the types of all variables at compile time, 
+The compiler must know the types of all variables at compile time,
 but it can usually infer what type we want to use based on the value and how it is used.
 */
 
-pub fn run(){
+pub fn run() {
     // the default integer type is i32
     let x = 2;
 

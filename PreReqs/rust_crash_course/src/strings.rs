@@ -1,9 +1,8 @@
 // String types in Rust
 
-
-/* 
-Rust has two string types: String and &str. 
-The String type is allocated on the heap and is growable, while &str is a fixed-length String that is usually used for String slices. 
+/*
+Rust has two string types: String and &str.
+The String type is allocated on the heap and is growable, while &str is a fixed-length String that is usually used for String slices.
 The String type is implemented as a wrapper over a Vec<u8> (a vector of u8 values, also known as bytes).
 */
 
@@ -36,14 +35,17 @@ pub fn run() {
     println!("Contains 'World' ?: {}", hello.contains("World"));
 
     // Replace a subString with another subString using the .replace() method
-    println!("Replace World with There: {}", hello.replace("World", "There"));
+    println!(
+        "Replace World with There: {}",
+        hello.replace("World", "There")
+    );
 
     // Loop through String by whitespace using the .split_whitespace() method
     for word in hello.split_whitespace() {
         println!("{}", word);
     }
 
-    // Create a String with a certain capacity in bytes using the .with_capacity() method 
+    // Create a String with a certain capacity in bytes using the .with_capacity() method
     let mut s = String::with_capacity(10);
     s.push('a');
     s.push('b');
