@@ -1,11 +1,11 @@
+// allow unused imports
+#![allow(unused_imports)]
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::{
-    to_binary, Addr, CosmosMsg, CustomQuery, Querier, QuerierWrapper, StdResult, WasmMsg, WasmQuery,
-};
+use cosmwasm_std::{to_binary, Addr, CosmosMsg, StdResult, WasmMsg};
 
-use crate::msg::{CustomResponse, ExecuteMsg, QueryMsg};
+use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
 
 /// CwTemplateContract is a wrapper around Addr that provides a lot of helpers
 /// for working with this. Rename it to your contract name.
@@ -26,7 +26,8 @@ impl CwTemplateContract {
         }
         .into())
     }
-
+}
+/* commenting out for now so I can compile! No custom responses are being used and I don't really understand this part yet.
     /// Get Custom
     pub fn custom_query<Q, T, CQ>(&self, querier: &Q, val: String) -> StdResult<CustomResponse>
     where
@@ -34,13 +35,10 @@ impl CwTemplateContract {
         T: Into<String>,
         CQ: CustomQuery,
     {
-        let msg = QueryMsg::CustomMsg { val };
         let query = WasmQuery::Smart {
             contract_addr: self.addr().into(),
             msg: to_binary(&msg)?,
-        }
-        .into();
-        let res: CustomResponse = QuerierWrapper::<CQ>::new(querier).query(&query)?;
-        Ok(res)
+        };
     }
 }
+*/
