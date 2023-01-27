@@ -250,19 +250,22 @@ mod tests {
             vec![attr("action", "instantiate"), attr("admin", ADDR1)]
         )
     }
-
     
     #[test]
+    // Test instantiate with admin
     fn test_instantiate_with_admin() {
+        // mock dependencies using mock_dependencies from cosmwasm_std
         let mut deps = mock_dependencies();
+        // mock the contract environment using mock_env from cosmwasm_std
         let env = mock_env();
-        // Send as ADDR1 to show admin is different
+        // mock info and set ADDR1 as admin is different from sender
         let info = mock_info(ADDR1, &[]);
 
         // Create a message where ADDR2 will be an admin
         // Have to use .to_string() method
         let msg = InstantiateMsg {
-            admin: Some(ADDR2.to_string()),
+            // set admin to ADDR2 using Some method which is an enum that can be either something or nothing
+            admin: Some(ADDR2.to_string()), // Some is an Option enum
         };
         // Unwrap to assert success
         let res = instantiate(deps.as_mut(), env, info, msg).unwrap();
