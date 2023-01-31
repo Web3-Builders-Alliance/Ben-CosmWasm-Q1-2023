@@ -1,21 +1,28 @@
+// derive library features
 #[cfg(not(feature = "library"))]
-use cosmwasm_std::entry_point;
-use cosmwasm_std::Order::Ascending;
-use cosmwasm_std::{
+use cosmwasm_std::entry_point; // import entry_point macro from cosmwasm_std library
+use cosmwasm_std::Order::Ascending; // import the Ascending enum from the Order module in the cosmwasm_std library
+use cosmwasm_std::{ // import the following modules and types from the cosmwasm_std library
     to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult, Uint128,
 };
 
-use cw2::set_contract_version;
-use cw20::{
+// import the following modules and types from the cw2 library
+use cw2::set_contract_version; // import the set_contract_version function from the cw2 library
+use cw20::{ // import the following types from the cw20 module in the cw20 library
     BalanceResponse, Cw20Coin, Cw20ReceiveMsg, DownloadLogoResponse, EmbeddedLogo, Logo, LogoInfo,
     MarketingInfoResponse, MinterResponse, TokenInfoResponse,
 };
+
+// import ensure_from_older_version function from the cw_utils library
 use cw_utils::ensure_from_older_version;
 
+// import functions and methods from allowances.rs file
 use crate::allowances::{
     execute_burn_from, execute_decrease_allowance, execute_increase_allowance, execute_send_from,
     execute_transfer_from, query_allowance,
 };
+
+// import functions, types, and methods from enumerable.rs file, error.rs file, msg.rs file, and state.rs file
 use crate::enumerable::{query_all_accounts, query_owner_allowances, query_spender_allowances};
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
@@ -28,6 +35,7 @@ use crate::state::{
 const CONTRACT_NAME: &str = "crates.io:cw20-base";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
+// define logo size limit
 const LOGO_SIZE_CAP: usize = 5 * 1024;
 
 /// Checks if data starts with XML preamble
@@ -35,18 +43,21 @@ fn verify_xml_preamble(data: &[u8]) -> Result<(), ContractError> {
     // The easiest way to perform this check would be just match on regex, however regex
     // compilation is heavy and probably not worth it.
 
-    let preamble = data
+    let preamble = data // verify the preamble is xml format
         .split_inclusive(|c| *c == b'>')
         .next()
-        .ok_or(ContractError::InvalidXmlPreamble {})?;
-
+        .ok_or(ContractError::InvalidXmlPreamble {})?; // return error if preamble is not xml format
+    
+    // XML prefix format:
     const PREFIX: &[u8] = b"<?xml ";
+    // XML postfix format:
     const POSTFIX: &[u8] = b"?>";
 
+    // verify the preamble is xml format
     if !(preamble.starts_with(PREFIX) && preamble.ends_with(POSTFIX)) {
-        Err(ContractError::InvalidXmlPreamble {})
-    } else {
-        Ok(())
+        Err(ContractError::InvalidXmlPreamble {}) // return error if preamble is not xml format
+    } else { 
+        Ok(()) // return Ok if preamble is xml format
     }
 
     // Additionally attributes format could be validated as they are well defined, as well as
@@ -57,10 +68,11 @@ fn verify_xml_preamble(data: &[u8]) -> Result<(), ContractError> {
 fn verify_xml_logo(logo: &[u8]) -> Result<(), ContractError> {
     verify_xml_preamble(logo)?;
 
-    if logo.len() > LOGO_SIZE_CAP {
-        Err(ContractError::LogoTooBig {})
+    // if preamble is valid, check if logo is too big
+    if logo.len() > LOGO_SIZE_CAP { // compare logo size to logo size cap
+        Err(ContractError::LogoTooBig {}) // return error if logo is too big
     } else {
-        Ok(())
+        Ok(()) // return Ok if logo is not too big
     }
 }
 
@@ -91,99 +103,109 @@ fn verify_logo(logo: &Logo) -> Result<(), ContractError> {
     }
 }
 
+// define the instantiate function and 1st contract entry point
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
-    mut deps: DepsMut,
-    _env: Env,
-    _info: MessageInfo,
-    msg: InstantiateMsg,
-) -> Result<Response, ContractError> {
-    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+    mut deps: DepsMut, // mutable state as a parameter
+    _env: Env, // internal blockchain info as a parameter
+    _info: MessageInfo, // internal message info as a parameter
+    msg: InstantiateMsg, // instantiate message as a parameter
+) -> Result<Response, ContractError> { // return type is Result<Response, ContractError>
+    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?; // sets contract name and version in the contract's state
     // check valid token info
-    msg.validate()?;
+    msg.validate()?; // validate message info and check for errors
     // create initial accounts
-    let total_supply = create_accounts(&mut deps, &msg.initial_balances)?;
+    let total_supply = create_accounts(&mut deps, &msg.initial_balances)?; // create total supply using create_accounts function
 
-    if let Some(limit) = msg.get_cap() {
-        if total_supply > limit {
-            return Err(StdError::generic_err("Initial supply greater than cap").into());
+    // check the total supply is not greater than the limit using the get_cap function
+    if let Some(limit) = msg.get_cap() { // define the token's supply limit, which is an optional value. No limit would be a blank value
+        if total_supply > limit {  // if the total supply is greater than the limit, return an error
+            return Err(StdError::generic_err("Initial supply greater than cap").into()); // return a generic error and print the error message given
         }
     }
 
-    let mint = match msg.mint {
-        Some(m) => Some(MinterData {
-            minter: deps.api.addr_validate(&m.minter)?,
-            cap: m.cap,
+    // define mint variable
+    let mint = match msg.mint { // match mint message 
+        Some(m) => Some(MinterData { // if mint message is Some, return a new MinterData struct
+            minter: deps.api.addr_validate(&m.minter)?, // validate minter address and check for errors
+            cap: m.cap, // set cap from message input 
         }),
-        None => None,
+        None => None, // if mint message is None, return None
     };
 
     // store token info
-    let data = TokenInfo {
-        name: msg.name,
-        symbol: msg.symbol,
-        decimals: msg.decimals,
-        total_supply,
-        mint,
+    let data = TokenInfo { // define a new TokenInfo struct
+        name: msg.name, // set name from message input
+        symbol: msg.symbol, // set symbol from message input
+        decimals: msg.decimals, // set decimals from message input
+        total_supply, // set total supply from create_accounts function
+        mint, // set mint from above
     };
-    TOKEN_INFO.save(deps.storage, &data)?;
+    TOKEN_INFO.save(deps.storage, &data)?; // save token info to the contract's state given the above data inputs and check for errors
 
-    if let Some(marketing) = msg.marketing {
-        let logo = if let Some(logo) = marketing.logo {
-            verify_logo(&logo)?;
-            LOGO.save(deps.storage, &logo)?;
+    // store marketing info
+    if let Some(marketing) = msg.marketing { // if marketing info was passed in the message, then continue
+        let logo = if let Some(logo) = marketing.logo { // if logo info was passed in the message, store it as logo
+            verify_logo(&logo)?; // verify logo and check for errors
+            LOGO.save(deps.storage, &logo)?; // save logo to the contract's state given the above logo input and check for errors
 
-            match logo {
-                Logo::Url(url) => Some(LogoInfo::Url(url)),
-                Logo::Embedded(_) => Some(LogoInfo::Embedded),
+            // match the logo to the LogoInfo enum
+            match logo { 
+                Logo::Url(url) => Some(LogoInfo::Url(url)), // set logo URL if one is given
+                Logo::Embedded(_) => Some(LogoInfo::Embedded), // set logo as embedded if one is given
             }
-        } else {
-            None
+        } else { // if no logo info was passed in the message then set return logo as None
+            None 
         };
 
+        // store marketing info as data struct
         let data = MarketingInfoResponse {
-            project: marketing.project,
-            description: marketing.description,
-            marketing: marketing
-                .marketing
-                .map(|addr| deps.api.addr_validate(&addr))
-                .transpose()?,
-            logo,
-        };
-        MARKETING_INFO.save(deps.storage, &data)?;
+            project: marketing.project, // set project from message input from marketing info defined above
+            description: marketing.description, // set description from message input from marketing info defined above
+            marketing: marketing // set marketing from message input from marketing info defined above
+                .marketing 
+                .map(|addr| deps.api.addr_validate(&addr)) // validate marketing address and check for errors
+                .transpose()?, // transpose the marketing address and check for errors
+            logo, // set logo from above
+        }; 
+        MARKETING_INFO.save(deps.storage, &data)?; // save marketing info to the contract's state given the above data inputs and check for errors
     }
 
-    Ok(Response::default())
+    Ok(Response::default()) // return a default response if result is Ok
 }
 
-pub fn create_accounts(
-    deps: &mut DepsMut,
-    accounts: &[Cw20Coin],
-) -> Result<Uint128, ContractError> {
-    validate_accounts(accounts)?;
+// create accounts function
+pub fn create_accounts( 
+    deps: &mut DepsMut, // mutable state as a parameter
+    accounts: &[Cw20Coin], // accounts as a parameter that is a slice of Cw20Coin
+) -> Result<Uint128, ContractError> { // return type is Result<Uint128, ContractError>
+    validate_accounts(accounts)?; // validate accounts and check for errors
 
-    let mut total_supply = Uint128::zero();
-    for row in accounts {
-        let address = deps.api.addr_validate(&row.address)?;
-        BALANCES.save(deps.storage, &address, &row.amount)?;
-        total_supply += row.amount;
+    let mut total_supply = Uint128::zero(); // set total supply to zero
+    for row in accounts { // for each account in the accounts slice
+        let address = deps.api.addr_validate(&row.address)?; // validate address and check for errors
+        BALANCES.save(deps.storage, &address, &row.amount)?; // save balance to the contract's state given the above address and amount inputs and check for errors
+        total_supply += row.amount; // add amount to total supply from each validate account/row
     }
 
-    Ok(total_supply)
+    Ok(total_supply) // return total supply if result is Ok
 }
 
-pub fn validate_accounts(accounts: &[Cw20Coin]) -> Result<(), ContractError> {
-    let mut addresses = accounts.iter().map(|c| &c.address).collect::<Vec<_>>();
-    addresses.sort();
-    addresses.dedup();
+// validate accounts function 
+pub fn validate_accounts(accounts: &[Cw20Coin]) // takes accounts as parameter which is a slice of a Cw20Coin struct
+    -> Result<(), ContractError> { // return result or contract error
+    let mut addresses = accounts.iter().map(|c| &c.address).collect::<Vec<_>>(); // iterate over the map of addresses, collect them into a vector, and return them
+    addresses.sort(); // sort addresses
+    addresses.dedup(); // remove duplicate addresses
 
-    if addresses.len() != accounts.len() {
-        Err(ContractError::DuplicateInitialBalanceAddresses {})
-    } else {
+    if addresses.len() != accounts.len() { // if the length of addresses is not equal to the length of accounts, return an error
+        Err(ContractError::DuplicateInitialBalanceAddresses {}) // return a duplicate initial balance addresses error
+    } else { // if the length of addresses is equal to the length of accounts, return Ok
         Ok(())
     }
 }
 
+// define execute function
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
     deps: DepsMut,

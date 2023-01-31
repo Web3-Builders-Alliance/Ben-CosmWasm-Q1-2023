@@ -1,24 +1,32 @@
+// import dependencies from the cosmwasm_std library
 use cosmwasm_std::{
     attr, Addr, Binary, BlockInfo, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult,
     Storage, Uint128,
 };
+
+// import dependent types from the cw20 library
 use cw20::{AllowanceResponse, Cw20ReceiveMsg, Expiration};
 
+// import the ContractError type from the error module
 use crate::error::ContractError;
+
+// import the state module and dependencies types
 use crate::state::{ALLOWANCES, ALLOWANCES_SPENDER, BALANCES, TOKEN_INFO};
 
+// write the execute function to handle the increase_allowance message
 pub fn execute_increase_allowance(
-    deps: DepsMut,
-    env: Env,
-    info: MessageInfo,
-    spender: String,
-    amount: Uint128,
-    expires: Option<Expiration>,
-) -> Result<Response, ContractError> {
-    let spender_addr = deps.api.addr_validate(&spender)?;
-    if spender_addr == info.sender {
-        return Err(ContractError::CannotSetOwnAccount {});
+    deps: DepsMut, // mutable state
+    env: Env, // blockchain info
+    info: MessageInfo, // message info
+    spender: String, // spender's address to increase the allowance for
+    amount: Uint128, // amount to increase allowance
+    expires: Option<Expiration>, // optional expiration time for the allowance if there is one
+) -> Result<Response, ContractError> { // return a Result type with a Response and ContractError
+    let spender_addr = deps.api.addr_validate(&spender)?; // validate the spender address and check for errors
+    if spender_addr == info.sender { // if the spender address (the target address to increase the allowance for) is the same as the sender address
+        return Err(ContractError::CannotSetOwnAccount {}); // return an error that you cannot set your own account's allowance
     }
+
 
     let update_fn = |allow: Option<AllowanceResponse>| -> Result<_, _> {
         let mut val = allow.unwrap_or_default();
@@ -243,6 +251,7 @@ pub fn execute_send_from(
     Ok(res)
 }
 
+// query the allowance of a given spender for a given owner and return the remaining allowance using the AllowanceResponse struct type
 pub fn query_allowance(deps: Deps, owner: String, spender: String) -> StdResult<AllowanceResponse> {
     let owner_addr = deps.api.addr_validate(&owner)?;
     let spender_addr = deps.api.addr_validate(&spender)?;
@@ -252,6 +261,7 @@ pub fn query_allowance(deps: Deps, owner: String, spender: String) -> StdResult<
     Ok(allowance)
 }
 
+// unit tests below 
 #[cfg(test)]
 mod tests {
     use super::*;
