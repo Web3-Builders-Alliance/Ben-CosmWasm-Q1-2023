@@ -15,18 +15,19 @@ use crate::state::{ALLOWANCES, ALLOWANCES_SPENDER, BALANCES, TOKEN_INFO};
 
 // write the execute function to handle the increase_allowance message
 pub fn execute_increase_allowance(
-    deps: DepsMut, // mutable state
-    env: Env, // blockchain info
-    info: MessageInfo, // message info
-    spender: String, // spender's address to increase the allowance for
-    amount: Uint128, // amount to increase allowance
+    deps: DepsMut,               // mutable state
+    env: Env,                    // blockchain info
+    info: MessageInfo,           // message info
+    spender: String,             // spender's address to increase the allowance for
+    amount: Uint128,             // amount to increase allowance
     expires: Option<Expiration>, // optional expiration time for the allowance if there is one
-) -> Result<Response, ContractError> { // return a Result type with a Response and ContractError
+) -> Result<Response, ContractError> {
+    // return a Result type with a Response and ContractError
     let spender_addr = deps.api.addr_validate(&spender)?; // validate the spender address and check for errors
-    if spender_addr == info.sender { // if the spender address (the target address to increase the allowance for) is the same as the sender address
+    if spender_addr == info.sender {
+        // if the spender address (the target address to increase the allowance for) is the same as the sender address
         return Err(ContractError::CannotSetOwnAccount {}); // return an error that you cannot set your own account's allowance
     }
-
 
     let update_fn = |allow: Option<AllowanceResponse>| -> Result<_, _> {
         let mut val = allow.unwrap_or_default();
@@ -261,7 +262,7 @@ pub fn query_allowance(deps: Deps, owner: String, spender: String) -> StdResult<
     Ok(allowance)
 }
 
-// unit tests below 
+// unit tests below
 #[cfg(test)]
 mod tests {
     use super::*;

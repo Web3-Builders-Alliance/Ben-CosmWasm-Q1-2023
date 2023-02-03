@@ -2,15 +2,34 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point; // import entry_point macro from cosmwasm_std library
 use cosmwasm_std::Order::Ascending; // import the Ascending enum from the Order module in the cosmwasm_std library
-use cosmwasm_std::{ // import the following modules and types from the cosmwasm_std library
-    to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult, Uint128,
+use cosmwasm_std::{
+    // import the following modules and types from the cosmwasm_std library
+    to_binary,
+    Binary,
+    Deps,
+    DepsMut,
+    Env,
+    MessageInfo,
+    Response,
+    StdError,
+    StdResult,
+    Uint128,
 };
 
 // import the following modules and types from the cw2 library
 use cw2::set_contract_version; // import the set_contract_version function from the cw2 library
-use cw20::{ // import the following types from the cw20 module in the cw20 library
-    BalanceResponse, Cw20Coin, Cw20ReceiveMsg, DownloadLogoResponse, EmbeddedLogo, Logo, LogoInfo,
-    MarketingInfoResponse, MinterResponse, TokenInfoResponse,
+use cw20::{
+    // import the following types from the cw20 module in the cw20 library
+    BalanceResponse,
+    Cw20Coin,
+    Cw20ReceiveMsg,
+    DownloadLogoResponse,
+    EmbeddedLogo,
+    Logo,
+    LogoInfo,
+    MarketingInfoResponse,
+    MinterResponse,
+    TokenInfoResponse,
 };
 
 // import ensure_from_older_version function from the cw_utils library
@@ -47,7 +66,7 @@ fn verify_xml_preamble(data: &[u8]) -> Result<(), ContractError> {
         .split_inclusive(|c| *c == b'>')
         .next()
         .ok_or(ContractError::InvalidXmlPreamble {})?; // return error if preamble is not xml format
-    
+
     // XML prefix format:
     const PREFIX: &[u8] = b"<?xml ";
     // XML postfix format:
@@ -56,7 +75,7 @@ fn verify_xml_preamble(data: &[u8]) -> Result<(), ContractError> {
     // verify the preamble is xml format
     if !(preamble.starts_with(PREFIX) && preamble.ends_with(POSTFIX)) {
         Err(ContractError::InvalidXmlPreamble {}) // return error if preamble is not xml format
-    } else { 
+    } else {
         Ok(()) // return Ok if preamble is xml format
     }
 
@@ -69,7 +88,8 @@ fn verify_xml_logo(logo: &[u8]) -> Result<(), ContractError> {
     verify_xml_preamble(logo)?;
 
     // if preamble is valid, check if logo is too big
-    if logo.len() > LOGO_SIZE_CAP { // compare logo size to logo size cap
+    if logo.len() > LOGO_SIZE_CAP {
+        // compare logo size to logo size cap
         Err(ContractError::LogoTooBig {}) // return error if logo is too big
     } else {
         Ok(()) // return Ok if logo is not too big
@@ -106,56 +126,66 @@ fn verify_logo(logo: &Logo) -> Result<(), ContractError> {
 // define the instantiate function and 1st contract entry point
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
-    mut deps: DepsMut, // mutable state as a parameter
-    _env: Env, // internal blockchain info as a parameter
-    _info: MessageInfo, // internal message info as a parameter
+    mut deps: DepsMut,   // mutable state as a parameter
+    _env: Env,           // internal blockchain info as a parameter
+    _info: MessageInfo,  // internal message info as a parameter
     msg: InstantiateMsg, // instantiate message as a parameter
-) -> Result<Response, ContractError> { // return type is Result<Response, ContractError>
+) -> Result<Response, ContractError> {
+    // return type is Result<Response, ContractError>
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?; // sets contract name and version in the contract's state
-    // check valid token info
+                                                                          // check valid token info
     msg.validate()?; // validate message info and check for errors
-    // create initial accounts
+                     // create initial accounts
     let total_supply = create_accounts(&mut deps, &msg.initial_balances)?; // create total supply using create_accounts function
 
     // check the total supply is not greater than the limit using the get_cap function
-    if let Some(limit) = msg.get_cap() { // define the token's supply limit, which is an optional value. No limit would be a blank value
-        if total_supply > limit {  // if the total supply is greater than the limit, return an error
-            return Err(StdError::generic_err("Initial supply greater than cap").into()); // return a generic error and print the error message given
+    if let Some(limit) = msg.get_cap() {
+        // define the token's supply limit, which is an optional value. No limit would be a blank value
+        if total_supply > limit {
+            // if the total supply is greater than the limit, return an error
+            return Err(StdError::generic_err("Initial supply greater than cap").into());
+            // return a generic error and print the error message given
         }
     }
 
     // define mint variable
-    let mint = match msg.mint { // match mint message 
-        Some(m) => Some(MinterData { // if mint message is Some, return a new MinterData struct
+    let mint = match msg.mint {
+        // match mint message
+        Some(m) => Some(MinterData {
+            // if mint message is Some, return a new MinterData struct
             minter: deps.api.addr_validate(&m.minter)?, // validate minter address and check for errors
-            cap: m.cap, // set cap from message input 
+            cap: m.cap,                                 // set cap from message input
         }),
         None => None, // if mint message is None, return None
     };
 
     // store token info
-    let data = TokenInfo { // define a new TokenInfo struct
-        name: msg.name, // set name from message input
-        symbol: msg.symbol, // set symbol from message input
+    let data = TokenInfo {
+        // define a new TokenInfo struct
+        name: msg.name,         // set name from message input
+        symbol: msg.symbol,     // set symbol from message input
         decimals: msg.decimals, // set decimals from message input
-        total_supply, // set total supply from create_accounts function
-        mint, // set mint from above
+        total_supply,           // set total supply from create_accounts function
+        mint,                   // set mint from above
     };
     TOKEN_INFO.save(deps.storage, &data)?; // save token info to the contract's state given the above data inputs and check for errors
 
     // store marketing info
-    if let Some(marketing) = msg.marketing { // if marketing info was passed in the message, then continue
-        let logo = if let Some(logo) = marketing.logo { // if logo info was passed in the message, store it as logo
+    if let Some(marketing) = msg.marketing {
+        // if marketing info was passed in the message, then continue
+        let logo = if let Some(logo) = marketing.logo {
+            // if logo info was passed in the message, store it as logo
             verify_logo(&logo)?; // verify logo and check for errors
             LOGO.save(deps.storage, &logo)?; // save logo to the contract's state given the above logo input and check for errors
 
             // match the logo to the LogoInfo enum
-            match logo { 
+            match logo {
                 Logo::Url(url) => Some(LogoInfo::Url(url)), // set logo URL if one is given
                 Logo::Embedded(_) => Some(LogoInfo::Embedded), // set logo as embedded if one is given
             }
-        } else { // if no logo info was passed in the message then set return logo as None
-            None 
+        } else {
+            // if no logo info was passed in the message then set return logo as None
+            None
         };
 
         // store marketing info as data struct
@@ -163,11 +193,11 @@ pub fn instantiate(
             project: marketing.project, // set project from message input from marketing info defined above
             description: marketing.description, // set description from message input from marketing info defined above
             marketing: marketing // set marketing from message input from marketing info defined above
-                .marketing 
+                .marketing
                 .map(|addr| deps.api.addr_validate(&addr)) // validate marketing address and check for errors
                 .transpose()?, // transpose the marketing address and check for errors
-            logo, // set logo from above
-        }; 
+            logo,                               // set logo from above
+        };
         MARKETING_INFO.save(deps.storage, &data)?; // save marketing info to the contract's state given the above data inputs and check for errors
     }
 
@@ -175,14 +205,16 @@ pub fn instantiate(
 }
 
 // create accounts function
-pub fn create_accounts( 
-    deps: &mut DepsMut, // mutable state as a parameter
+pub fn create_accounts(
+    deps: &mut DepsMut,    // mutable state as a parameter
     accounts: &[Cw20Coin], // accounts as a parameter that is a slice of Cw20Coin
-) -> Result<Uint128, ContractError> { // return type is Result<Uint128, ContractError>
+) -> Result<Uint128, ContractError> {
+    // return type is Result<Uint128, ContractError>
     validate_accounts(accounts)?; // validate accounts and check for errors
 
     let mut total_supply = Uint128::zero(); // set total supply to zero
-    for row in accounts { // for each account in the accounts slice
+    for row in accounts {
+        // for each account in the accounts slice
         let address = deps.api.addr_validate(&row.address)?; // validate address and check for errors
         BALANCES.save(deps.storage, &address, &row.amount)?; // save balance to the contract's state given the above address and amount inputs and check for errors
         total_supply += row.amount; // add amount to total supply from each validate account/row
@@ -191,73 +223,78 @@ pub fn create_accounts(
     Ok(total_supply) // return total supply if result is Ok
 }
 
-// validate accounts function 
-pub fn validate_accounts(accounts: &[Cw20Coin]) // takes accounts as parameter which is a slice of a Cw20Coin struct
-    -> Result<(), ContractError> { // return result or contract error
+// validate accounts function
+pub fn validate_accounts(accounts: &[Cw20Coin]) -> Result<(), ContractError> {
+    // return result or contract error
     let mut addresses = accounts.iter().map(|c| &c.address).collect::<Vec<_>>(); // iterate over the map of addresses, collect them into a vector, and return them
     addresses.sort(); // sort addresses
     addresses.dedup(); // remove duplicate addresses
 
-    if addresses.len() != accounts.len() { // if the length of addresses is not equal to the length of accounts, return an error
+    if addresses.len() != accounts.len() {
+        // if the length of addresses is not equal to the length of accounts, return an error
         Err(ContractError::DuplicateInitialBalanceAddresses {}) // return a duplicate initial balance addresses error
-    } else { // if the length of addresses is equal to the length of accounts, return Ok
+    } else {
+        // if the length of addresses is equal to the length of accounts, return Ok
         Ok(())
     }
 }
 
-// define execute function
+// define execute function and second entry point
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn execute(
-    deps: DepsMut,
-    env: Env,
-    info: MessageInfo,
-    msg: ExecuteMsg,
-) -> Result<Response, ContractError> {
-    match msg {
-        ExecuteMsg::Transfer { recipient, amount } => {
-            execute_transfer(deps, env, info, recipient, amount)
+pub fn execute(    // execute function
+    deps: DepsMut, // mutable state as a parameter
+    env: Env,     // current blockchain environment as a parameter
+    info: MessageInfo, // message info as a parameter
+    msg: ExecuteMsg, // message as a parameter
+) -> Result<Response, ContractError> { // return type is Result<Response, ContractError>
+    match msg { // match message sent and call the appropriate function
+        ExecuteMsg::Transfer { recipient, amount } => { // if message is transfer, call execute_transfer function
+            execute_transfer(deps, env, info, recipient, amount) // take deps, env, info, recipient, and amount to transfer as parameters
         }
-        ExecuteMsg::Burn { amount } => execute_burn(deps, env, info, amount),
-        ExecuteMsg::Send {
-            contract,
-            amount,
-            msg,
-        } => execute_send(deps, env, info, contract, amount, msg),
-        ExecuteMsg::Mint { recipient, amount } => execute_mint(deps, env, info, recipient, amount),
-        ExecuteMsg::IncreaseAllowance {
-            spender,
-            amount,
-            expires,
-        } => execute_increase_allowance(deps, env, info, spender, amount, expires),
-        ExecuteMsg::DecreaseAllowance {
-            spender,
-            amount,
-            expires,
-        } => execute_decrease_allowance(deps, env, info, spender, amount, expires),
-        ExecuteMsg::TransferFrom {
-            owner,
-            recipient,
-            amount,
-        } => execute_transfer_from(deps, env, info, owner, recipient, amount),
-        ExecuteMsg::BurnFrom { owner, amount } => execute_burn_from(deps, env, info, owner, amount),
-        ExecuteMsg::SendFrom {
-            owner,
-            contract,
-            amount,
-            msg,
-        } => execute_send_from(deps, env, info, owner, contract, amount, msg),
-        ExecuteMsg::UpdateMarketing {
-            project,
-            description,
-            marketing,
-        } => execute_update_marketing(deps, env, info, project, description, marketing),
-        ExecuteMsg::UploadLogo(logo) => execute_upload_logo(deps, env, info, logo),
-        ExecuteMsg::UpdateMinter { new_minter } => {
-            execute_update_minter(deps, env, info, new_minter)
+        ExecuteMsg::Burn { amount } => execute_burn(deps, env, info, amount), // if message is burn, call execute_burn function and take deps, env, info, and amount to burn as parameters
+        ExecuteMsg::Send { // if message is send, call execute_send function
+            contract, // take contract address as a parameter
+            amount, // take amount to send as a parameter
+            msg, // take message to send as a parameter
+        } => execute_send(deps, env, info, contract, amount, msg), // take deps, env, info, contract, amount, and msg as parameters
+        ExecuteMsg::Mint { recipient, amount } => execute_mint(deps, env, info, recipient, amount), // if message is mint, call execute_mint function and take deps, env, info, recipient, and amount to mint as parameters
+        ExecuteMsg::IncreaseAllowance { // if message is increase allowance, call execute_increase_allowance function
+            spender, // take spender's address as a parameter
+            amount, // take amount to increase allowance by as a parameter
+            expires, // take expiration date as a parameter
+        } => execute_increase_allowance(deps, env, info, spender, amount, expires), // take deps, env, info, spender, amount, and expires as parameters
+        ExecuteMsg::DecreaseAllowance { // if message is decrease allowance, call execute_decrease_allowance function
+            spender, // take spender's address as a parameter
+            amount, // take amount to decrease allowance by as a parameter
+            expires, // take expiration date as a parameter
+        } => execute_decrease_allowance(deps, env, info, spender, amount, expires), // take deps, env, info, spender, amount, and expires as parameters
+        ExecuteMsg::TransferFrom { // if message is transfer from, call execute_transfer_from function
+            owner, // take owner's address as a parameter
+            recipient, // take recipient's address as a parameter
+            amount, // take amount to transfer as a parameter
+        } => execute_transfer_from(deps, env, info, owner, recipient, amount), // take deps, env, info, owner, recipient, and amount as parameters
+        ExecuteMsg::BurnFrom { owner, amount } => execute_burn_from(deps, env, info, owner, amount), // if message is burn from, call execute_burn_from function and take deps, env, info, owner, and amount as parameters
+        ExecuteMsg::SendFrom { // if message is send from, call execute_send_from function
+            owner, // take owner's address as a parameter
+            contract, // take contract address as a parameter
+            amount, // take amount to send as a parameter
+            msg, // take message to send as a parameter
+        } => execute_send_from(deps, env, info, owner, contract, amount, msg), // take deps, env, info, owner, contract, amount, and msg as parameters
+        ExecuteMsg::UpdateMarketing { // if message is update marketing, call execute_update_marketing function
+            project, // take project name as a parameter
+            description, // take project description as a parameter
+            marketing, // take marketing address as a parameter
+        } => execute_update_marketing(deps, env, info, project, description, marketing), // take deps, env, info, project, description, and marketing as parameters
+        ExecuteMsg::UploadLogo(logo) => execute_upload_logo(deps, env, info, logo), // if message is upload logo, call execute_upload_logo function and take deps, env, info, and logo as parameters
+        ExecuteMsg::UpdateMinter { new_minter } => { // if message is update minter, call execute_update_minter function
+            execute_update_minter(deps, env, info, new_minter) // take deps, env, info, and new minter as parameters
         }
     }
 }
 
+// transfer sends funds to a user, and not a contract
+// execute transfer takes mutable state, the current blockchain _env, message info, a recipient's (NON-CONTRACT) address, and an amount to transfer as parameters
+// if the amount sent is zero, it returns an error
 pub fn execute_transfer(
     deps: DepsMut,
     _env: Env,
@@ -269,21 +306,26 @@ pub fn execute_transfer(
         return Err(ContractError::InvalidZeroAmount {});
     }
 
+    // validate the recipients address
     let rcpt_addr = deps.api.addr_validate(&recipient)?;
 
+    // subtract the amount from the sender's balance,
     BALANCES.update(
         deps.storage,
         &info.sender,
         |balance: Option<Uint128>| -> StdResult<_> {
-            Ok(balance.unwrap_or_default().checked_sub(amount)?)
+            Ok(balance.unwrap_or_default().checked_sub(amount)?) // check for underflow errors using checked_sub
         },
-    )?;
+    )?; // check for errors
+
+    // add the amount to the recipient's balance
     BALANCES.update(
         deps.storage,
         &rcpt_addr,
         |balance: Option<Uint128>| -> StdResult<_> { Ok(balance.unwrap_or_default() + amount) },
-    )?;
+    )?; // check for errors
 
+    // Ok response and add attributes to the response if successful
     let res = Response::new()
         .add_attribute("action", "transfer")
         .add_attribute("from", info.sender)
@@ -292,6 +334,7 @@ pub fn execute_transfer(
     Ok(res)
 }
 
+// the execute_brun function burns a given amount of tokens from the sender's balance, and updates the total supply of that token accordingly
 pub fn execute_burn(
     deps: DepsMut,
     _env: Env,
@@ -299,10 +342,10 @@ pub fn execute_burn(
     amount: Uint128,
 ) -> Result<Response, ContractError> {
     if amount == Uint128::zero() {
-        return Err(ContractError::InvalidZeroAmount {});
+        return Err(ContractError::InvalidZeroAmount {}); // return error if zero amount
     }
 
-    // lower balance
+    // lower balance of sender
     BALANCES.update(
         deps.storage,
         &info.sender,
@@ -310,19 +353,20 @@ pub fn execute_burn(
             Ok(balance.unwrap_or_default().checked_sub(amount)?)
         },
     )?;
-    // reduce total_supply
+    // reduce total_supply by the amount burned
     TOKEN_INFO.update(deps.storage, |mut info| -> StdResult<_> {
         info.total_supply = info.total_supply.checked_sub(amount)?;
         Ok(info)
     })?;
 
+    // add metadata attributes to the response if successful
     let res = Response::new()
         .add_attribute("action", "burn")
         .add_attribute("from", info.sender)
         .add_attribute("amount", amount);
     Ok(res)
 }
-
+// the execute_mint function mints a given amount of tokens to the recipient's address, and updates the total supply of that token accordingly
 pub fn execute_mint(
     deps: DepsMut,
     _env: Env,
@@ -341,30 +385,33 @@ pub fn execute_mint(
     if config
         .mint
         .as_ref()
-        .ok_or(ContractError::Unauthorized {})?
+        .ok_or(ContractError::Unauthorized {})? // check if mint is authorized
         .minter
-        != info.sender
+        != info.sender // check if the sender is the minter
     {
-        return Err(ContractError::Unauthorized {});
+        return Err(ContractError::Unauthorized {}); // return error if unauthorized
     }
 
     // update supply and enforce cap
     config.total_supply += amount;
     if let Some(limit) = config.get_cap() {
         if config.total_supply > limit {
-            return Err(ContractError::CannotExceedCap {});
+            return Err(ContractError::CannotExceedCap {}); // return error if cap is exceeded by requested mint amount once added to the total supply
         }
     }
+
+    // save updated token info to contract's state
     TOKEN_INFO.save(deps.storage, &config)?;
 
     // add amount to recipient balance
     let rcpt_addr = deps.api.addr_validate(&recipient)?;
-    BALANCES.update(
+    BALANCES.update( // update the recipient's balance
         deps.storage,
         &rcpt_addr,
-        |balance: Option<Uint128>| -> StdResult<_> { Ok(balance.unwrap_or_default() + amount) },
-    )?;
+        |balance: Option<Uint128>| -> StdResult<_> { Ok(balance.unwrap_or_default() + amount) }, // add the amount to the recipient's balance by amount
+    )?; // check for errors
 
+    // add metadata attributes to the response if successful
     let res = Response::new()
         .add_attribute("action", "mint")
         .add_attribute("to", recipient)
@@ -372,50 +419,56 @@ pub fn execute_mint(
     Ok(res)
 }
 
+// the execute_send function sends funds to a contract address, and not a user
 pub fn execute_send(
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
-    contract: String,
+    contract: String, // the contract address to send the funds to
     amount: Uint128,
-    msg: Binary,
+    msg: Binary, // the message to be sent to the contract
 ) -> Result<Response, ContractError> {
     if amount == Uint128::zero() {
-        return Err(ContractError::InvalidZeroAmount {});
+        return Err(ContractError::InvalidZeroAmount {}); // return error if zero amount
     }
 
+    // validate the contract address
     let rcpt_addr = deps.api.addr_validate(&contract)?;
 
-    // move the tokens to the contract
+    // update the token balance of the sender's address
     BALANCES.update(
         deps.storage,
         &info.sender,
         |balance: Option<Uint128>| -> StdResult<_> {
-            Ok(balance.unwrap_or_default().checked_sub(amount)?)
+            Ok(balance.unwrap_or_default().checked_sub(amount)?) // check for underflow errors using checked_sub (meaning the sender does not have enough funds to execute this send)
         },
     )?;
+
+    // update the token balance of the recipient's address
     BALANCES.update(
         deps.storage,
         &rcpt_addr,
         |balance: Option<Uint128>| -> StdResult<_> { Ok(balance.unwrap_or_default() + amount) },
     )?;
 
+    // add metadata attributes to the response if successful
     let res = Response::new()
         .add_attribute("action", "send")
         .add_attribute("from", &info.sender)
         .add_attribute("to", &contract)
         .add_attribute("amount", amount)
-        .add_message(
+        .add_message( // add the message to be sent to the contract
             Cw20ReceiveMsg {
-                sender: info.sender.into(),
-                amount,
-                msg,
+                sender: info.sender.into(), // the sender's address
+                amount, // the amount of tokens to be sent
+                msg, // the message to be sent to the contract
             }
-            .into_cosmos_msg(contract)?,
+            .into_cosmos_msg(contract)?, // convert the message to a CosmosMsg
         );
     Ok(res)
 }
 
+// the execute_update_minter function updates the authorized minter's address
 pub fn execute_update_minter(
     deps: DepsMut,
     _env: Env,
@@ -423,14 +476,15 @@ pub fn execute_update_minter(
     new_minter: Option<String>,
 ) -> Result<Response, ContractError> {
     let mut config = TOKEN_INFO
-        .may_load(deps.storage)?
-        .ok_or(ContractError::Unauthorized {})?;
+        .may_load(deps.storage)?  // load the token info from the contract's state and check for errors
+        .ok_or(ContractError::Unauthorized {})?; // return error if unauthorized
 
-    let mint = config.mint.as_ref().ok_or(ContractError::Unauthorized {})?;
-    if mint.minter != info.sender {
-        return Err(ContractError::Unauthorized {});
+    let mint = config.mint.as_ref().ok_or(ContractError::Unauthorized {})?; // check if mint is authorized and if not error
+    if mint.minter != info.sender { // check if the sender is the minter
+        return Err(ContractError::Unauthorized {}); // if not, return unauthorized error because the minter must be the sender
     }
 
+    // update the minter's address
     let minter_data = new_minter
         .map(|new_minter| deps.api.addr_validate(&new_minter))
         .transpose()?
@@ -439,10 +493,11 @@ pub fn execute_update_minter(
             cap: mint.cap,
         });
 
-    config.mint = minter_data;
+    config.mint = minter_data; // update the minter's address using the minter_data defined above
 
-    TOKEN_INFO.save(deps.storage, &config)?;
+    TOKEN_INFO.save(deps.storage, &config)?; // save the updated token info to the contract's state
 
+    // add metadata attributes to the response if successful
     Ok(Response::default()
         .add_attribute("action", "update_minter")
         .add_attribute(
@@ -454,18 +509,20 @@ pub fn execute_update_minter(
         ))
 }
 
+// the execute_update_marketing function updates the marketing information for the token
 pub fn execute_update_marketing(
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
-    project: Option<String>,
-    description: Option<String>,
-    marketing: Option<String>,
+    project: Option<String>, // the project name
+    description: Option<String>, // the project description
+    marketing: Option<String>, // the marketing info
 ) -> Result<Response, ContractError> {
     let mut marketing_info = MARKETING_INFO
         .may_load(deps.storage)?
         .ok_or(ContractError::Unauthorized {})?;
 
+    // check if the sender is the marketing address and error unauthorized if not
     if marketing_info
         .marketing
         .as_ref()
@@ -475,38 +532,44 @@ pub fn execute_update_marketing(
         return Err(ContractError::Unauthorized {});
     }
 
+   // match the project name if it exists, and if not that return none
     match project {
         Some(empty) if empty.trim().is_empty() => marketing_info.project = None,
         Some(project) => marketing_info.project = Some(project),
         None => (),
     }
 
+    // match the description if it exists, and if not that return none
     match description {
         Some(empty) if empty.trim().is_empty() => marketing_info.description = None,
         Some(description) => marketing_info.description = Some(description),
         None => (),
     }
 
+    // match the marketing info if it exists, and if not that return none
     match marketing {
         Some(empty) if empty.trim().is_empty() => marketing_info.marketing = None,
         Some(marketing) => marketing_info.marketing = Some(deps.api.addr_validate(&marketing)?),
         None => (),
     }
 
+    // remove the marketing info if all fields are empty
     if marketing_info.project.is_none()
         && marketing_info.description.is_none()
         && marketing_info.marketing.is_none()
         && marketing_info.logo.is_none()
     {
         MARKETING_INFO.remove(deps.storage);
-    } else {
+    } else { // else save the updated marketing info to the contract's state
         MARKETING_INFO.save(deps.storage, &marketing_info)?;
     }
 
+    // add metadata attributes to the response if successful
     let res = Response::new().add_attribute("action", "update_marketing");
     Ok(res)
 }
 
+// the execute_upload_logo function uploads the logo for the token
 pub fn execute_upload_logo(
     deps: DepsMut,
     _env: Env,
@@ -517,8 +580,10 @@ pub fn execute_upload_logo(
         .may_load(deps.storage)?
         .ok_or(ContractError::Unauthorized {})?;
 
+    // verify the logo
     verify_logo(&logo)?;
 
+    // check if the sender is the marketing address and error unauthorized if not
     if marketing_info
         .marketing
         .as_ref()
@@ -528,35 +593,40 @@ pub fn execute_upload_logo(
         return Err(ContractError::Unauthorized {});
     }
 
+    // save the logo to the contract's state
     LOGO.save(deps.storage, &logo)?;
 
+    // match the logo and return the logo info
     let logo_info = match logo {
         Logo::Url(url) => LogoInfo::Url(url),
         Logo::Embedded(_) => LogoInfo::Embedded,
     };
 
+    // save the logo info to the contract's state
     marketing_info.logo = Some(logo_info);
     MARKETING_INFO.save(deps.storage, &marketing_info)?;
 
+    // add metadata attributes to the response if successful
     let res = Response::new().add_attribute("action", "upload_logo");
     Ok(res)
 }
 
+// define the query function and 3rd entry point for the contract
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Balance { address } => to_binary(&query_balance(deps, address)?),
-        QueryMsg::TokenInfo {} => to_binary(&query_token_info(deps)?),
-        QueryMsg::Minter {} => to_binary(&query_minter(deps)?),
-        QueryMsg::Allowance { owner, spender } => {
+        QueryMsg::Balance { address } => to_binary(&query_balance(deps, address)?), // query the balance of an address
+        QueryMsg::TokenInfo {} => to_binary(&query_token_info(deps)?), // query the token info
+        QueryMsg::Minter {} => to_binary(&query_minter(deps)?), // query the minter
+        QueryMsg::Allowance { owner, spender } => { // query the allowance of an owner and spender
             to_binary(&query_allowance(deps, owner, spender)?)
         }
-        QueryMsg::AllAllowances {
+        QueryMsg::AllAllowances { // query all allowances given owner, start, and limit constraints
             owner,
             start_after,
             limit,
         } => to_binary(&query_owner_allowances(deps, owner, start_after, limit)?),
-        QueryMsg::AllSpenderAllowances {
+        QueryMsg::AllSpenderAllowances { // query all allowances given owner, start, and limit constraints
             spender,
             start_after,
             limit,
@@ -566,14 +636,15 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
             start_after,
             limit,
         )?),
-        QueryMsg::AllAccounts { start_after, limit } => {
+        QueryMsg::AllAccounts { start_after, limit } => { // query all accounts given start and limit constraints
             to_binary(&query_all_accounts(deps, start_after, limit)?)
         }
-        QueryMsg::MarketingInfo {} => to_binary(&query_marketing_info(deps)?),
-        QueryMsg::DownloadLogo {} => to_binary(&query_download_logo(deps)?),
+        QueryMsg::MarketingInfo {} => to_binary(&query_marketing_info(deps)?), // query the marketing info
+        QueryMsg::DownloadLogo {} => to_binary(&query_download_logo(deps)?), // query the logo
     }
 }
 
+// the query_balance function queries the balance of an address
 pub fn query_balance(deps: Deps, address: String) -> StdResult<BalanceResponse> {
     let address = deps.api.addr_validate(&address)?;
     let balance = BALANCES
@@ -582,6 +653,7 @@ pub fn query_balance(deps: Deps, address: String) -> StdResult<BalanceResponse> 
     Ok(BalanceResponse { balance })
 }
 
+// the query_token_info function queries the token info
 pub fn query_token_info(deps: Deps) -> StdResult<TokenInfoResponse> {
     let info = TOKEN_INFO.load(deps.storage)?;
     let res = TokenInfoResponse {
@@ -593,6 +665,7 @@ pub fn query_token_info(deps: Deps) -> StdResult<TokenInfoResponse> {
     Ok(res)
 }
 
+// the query_minter function queries the minter
 pub fn query_minter(deps: Deps) -> StdResult<Option<MinterResponse>> {
     let meta = TOKEN_INFO.load(deps.storage)?;
     let minter = match meta.mint {
@@ -605,10 +678,12 @@ pub fn query_minter(deps: Deps) -> StdResult<Option<MinterResponse>> {
     Ok(minter)
 }
 
+// the query_marketing_info function queries the marketing info
 pub fn query_marketing_info(deps: Deps) -> StdResult<MarketingInfoResponse> {
     Ok(MARKETING_INFO.may_load(deps.storage)?.unwrap_or_default())
 }
 
+// the query_download_logo function queries the logo of a token
 pub fn query_download_logo(deps: Deps) -> StdResult<DownloadLogoResponse> {
     let logo = LOGO.load(deps.storage)?;
     match logo {
@@ -624,6 +699,7 @@ pub fn query_download_logo(deps: Deps) -> StdResult<DownloadLogoResponse> {
     }
 }
 
+// migration entrypoint for migrating the contract to a new version
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
     let original_version =
@@ -641,6 +717,7 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
     Ok(Response::default())
 }
 
+// tests for the contract
 #[cfg(test)]
 mod tests {
     use cosmwasm_std::testing::{
