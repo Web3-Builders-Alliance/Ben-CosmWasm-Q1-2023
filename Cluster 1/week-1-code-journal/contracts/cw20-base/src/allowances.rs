@@ -1,3 +1,5 @@
+//test
+
 // import dependencies from the cosmwasm_std library
 use cosmwasm_std::{
     Addr, attr, Binary, BlockInfo, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult,
