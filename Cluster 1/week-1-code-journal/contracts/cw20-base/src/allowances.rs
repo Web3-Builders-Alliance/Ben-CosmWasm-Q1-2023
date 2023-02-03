@@ -27,20 +27,24 @@ pub fn execute_increase_allowance(
         return Err(ContractError::CannotSetOwnAccount {}); // return an error that you cannot set your own account's allowance
     }
 
+    // define a closure to update the allowance
     let update_fn = |allow: Option<AllowanceResponse>| -> Result<_, _> {
-        let mut val = allow.unwrap_or_default();
-        if let Some(exp) = expires {
-            if exp.is_expired(&env.block) {
-                return Err(ContractError::InvalidExpiration {});
+        let mut val = allow.unwrap_or_default(); // get the current allowance or set it to the default value
+        if let Some(exp) = expires { // if there is an expiration time
+            if exp.is_expired(&env.block) { // check if the expiration time is expired
+                return Err(ContractError::InvalidExpiration {}); // if it is expired, return an error
             }
-            val.expires = exp;
+            val.expires = exp; // if it is not expired, set the expiration time to the new expiration time
         }
-        val.allowance += amount;
-        Ok(val)
+        val.allowance += amount; // add the amount to the allowance
+        Ok(val) // return the updated allowance
     };
+
+    // update the allowance for the owner and spender
     ALLOWANCES.update(deps.storage, (&info.sender, &spender_addr), update_fn)?;
     ALLOWANCES_SPENDER.update(deps.storage, (&spender_addr, &info.sender), update_fn)?;
 
+    // return Ok response and update metadata with a vector of attributes
     let res = Response::new().add_attributes(vec![
         attr("action", "increase_allowance"),
         attr("owner", info.sender),
@@ -50,6 +54,7 @@ pub fn execute_increase_allowance(
     Ok(res)
 }
 
+// the execute_decrease_allowance function decreases the allowance for a spender
 pub fn execute_decrease_allowance(
     deps: DepsMut,
     env: Env,
@@ -58,38 +63,43 @@ pub fn execute_decrease_allowance(
     amount: Uint128,
     expires: Option<Expiration>,
 ) -> Result<Response, ContractError> {
-    let spender_addr = deps.api.addr_validate(&spender)?;
-    if spender_addr == info.sender {
-        return Err(ContractError::CannotSetOwnAccount {});
+    let spender_addr = deps.api.addr_validate(&spender)?; // validate the spender address
+    if spender_addr == info.sender { // if the spender address is the same as the sender address
+        return Err(ContractError::CannotSetOwnAccount {}); // return an error that you cannot set your own account's allowance
     }
 
+    // define a key to load the allowance
     let key = (&info.sender, &spender_addr);
 
+    // define a closure to reverse the key
     fn reverse<'a>(t: (&'a Addr, &'a Addr)) -> (&'a Addr, &'a Addr) {
-        (t.1, t.0)
+        (t.1, t.0) // reverse the key
     }
 
     // load value and delete if it hits 0, or update otherwise
     let mut allowance = ALLOWANCES.load(deps.storage, key)?;
     if amount < allowance.allowance {
         // update the new amount
-        allowance.allowance = allowance
-            .allowance
-            .checked_sub(amount)
-            .map_err(StdError::overflow)?;
+        allowance.allowance = allowance // set the new allowance
+            .allowance // get the current allowance
+            .checked_sub(amount) // check if the sender has enough allowance to subtract the amount from the allowance
+            .map_err(StdError::overflow)?; // if there is an error, return an overflow error
         if let Some(exp) = expires {
-            if exp.is_expired(&env.block) {
-                return Err(ContractError::InvalidExpiration {});
+            if exp.is_expired(&env.block) { // check if the expiration time is expired
+                return Err(ContractError::InvalidExpiration {}); // if it is expired, return an error
             }
-            allowance.expires = exp;
+            allowance.expires = exp; // update the expiration time
         }
+
+        // save the allowance key
         ALLOWANCES.save(deps.storage, key, &allowance)?;
-        ALLOWANCES_SPENDER.save(deps.storage, reverse(key), &allowance)?;
+        ALLOWANCES_SPENDER.save(deps.storage, reverse(key), &allowance)?; // save the allowance spender and reverse the key?
     } else {
-        ALLOWANCES.remove(deps.storage, key);
-        ALLOWANCES_SPENDER.remove(deps.storage, reverse(key));
+        ALLOWANCES.remove(deps.storage, key); // or else remove the allowance
+        ALLOWANCES_SPENDER.remove(deps.storage, reverse(key)); // remove the allowance spender and reverse the key
     }
 
+    // return Ok response and update metadata with a vector of attributes
     let res = Response::new().add_attributes(vec![
         attr("action", "decrease_allowance"),
         attr("owner", info.sender),
