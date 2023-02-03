@@ -1,15 +1,13 @@
 // import dependencies from the cosmwasm_std library
 use cosmwasm_std::{
-    attr, Addr, Binary, BlockInfo, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult,
+    Addr, attr, Binary, BlockInfo, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult,
     Storage, Uint128,
 };
-
 // import dependent types from the cw20 library
 use cw20::{AllowanceResponse, Cw20ReceiveMsg, Expiration};
 
 // import the ContractError type from the error module
 use crate::error::ContractError;
-
 // import the state module and dependencies types
 use crate::state::{ALLOWANCES, ALLOWANCES_SPENDER, BALANCES, TOKEN_INFO};
 
@@ -101,7 +99,7 @@ pub fn execute_decrease_allowance(
     Ok(res)
 }
 
-// this can be used to update a lower allowance - call bucket.update with proper keys
+// the deduct_allowance function deducts the allowance from the spender's account
 pub fn deduct_allowance(
     storage: &mut dyn Storage,
     owner: &Addr,
@@ -126,10 +124,13 @@ pub fn deduct_allowance(
             None => Err(ContractError::NoAllowance {}),
         }
     };
+
+    // update the allowance for the owner and spender
     ALLOWANCES.update(storage, (owner, spender), update_fn)?;
     ALLOWANCES_SPENDER.update(storage, (spender, owner), update_fn)
 }
 
+// the execute_transfer_from function transfers the tokens from the owner's account to the recipient's account
 pub fn execute_transfer_from(
     deps: DepsMut,
     env: Env,
@@ -138,12 +139,14 @@ pub fn execute_transfer_from(
     recipient: String,
     amount: Uint128,
 ) -> Result<Response, ContractError> {
+    // validate the recipient address and owner address, check for errors
     let rcpt_addr = deps.api.addr_validate(&recipient)?;
     let owner_addr = deps.api.addr_validate(&owner)?;
 
     // deduct allowance before doing anything else have enough allowance
     deduct_allowance(deps.storage, &owner_addr, &info.sender, &env.block, amount)?;
 
+    // update the balances for the owner address
     BALANCES.update(
         deps.storage,
         &owner_addr,
@@ -151,12 +154,15 @@ pub fn execute_transfer_from(
             Ok(balance.unwrap_or_default().checked_sub(amount)?)
         },
     )?;
+
+    // update the balances for the recipient address
     BALANCES.update(
         deps.storage,
         &rcpt_addr,
         |balance: Option<Uint128>| -> StdResult<_> { Ok(balance.unwrap_or_default() + amount) },
     )?;
 
+    // return the response and a vector of attributes if successful
     let res = Response::new().add_attributes(vec![
         attr("action", "transfer_from"),
         attr("from", owner),
@@ -167,6 +173,7 @@ pub fn execute_transfer_from(
     Ok(res)
 }
 
+// the execute_burn_from function burns the tokens from the owner's account
 pub fn execute_burn_from(
     deps: DepsMut,
 
@@ -180,7 +187,7 @@ pub fn execute_burn_from(
     // deduct allowance before doing anything else have enough allowance
     deduct_allowance(deps.storage, &owner_addr, &info.sender, &env.block, amount)?;
 
-    // lower balance
+    // lower balance for the owner
     BALANCES.update(
         deps.storage,
         &owner_addr,
@@ -188,12 +195,13 @@ pub fn execute_burn_from(
             Ok(balance.unwrap_or_default().checked_sub(amount)?)
         },
     )?;
-    // reduce total_supply
+    // reduce total_supply by amount
     TOKEN_INFO.update(deps.storage, |mut meta| -> StdResult<_> {
         meta.total_supply = meta.total_supply.checked_sub(amount)?;
         Ok(meta)
     })?;
 
+    // return an Ok response and a vector of attributes if successful
     let res = Response::new().add_attributes(vec![
         attr("action", "burn_from"),
         attr("from", owner),
@@ -203,6 +211,7 @@ pub fn execute_burn_from(
     Ok(res)
 }
 
+// the execute_send_from function sends the tokens from the owner's account to the contract address
 pub fn execute_send_from(
     deps: DepsMut,
     env: Env,
@@ -212,26 +221,29 @@ pub fn execute_send_from(
     amount: Uint128,
     msg: Binary,
 ) -> Result<Response, ContractError> {
-    let rcpt_addr = deps.api.addr_validate(&contract)?;
-    let owner_addr = deps.api.addr_validate(&owner)?;
+    let rcpt_addr = deps.api.addr_validate(&contract)?; // validate the contract address
+    let owner_addr = deps.api.addr_validate(&owner)?; // validate the owner address
 
     // deduct allowance before doing anything else have enough allowance
     deduct_allowance(deps.storage, &owner_addr, &info.sender, &env.block, amount)?;
 
-    // move the tokens to the contract
+    // update the owner's balance
     BALANCES.update(
         deps.storage,
         &owner_addr,
         |balance: Option<Uint128>| -> StdResult<_> {
-            Ok(balance.unwrap_or_default().checked_sub(amount)?)
+            Ok(balance.unwrap_or_default().checked_sub(amount)?) // check the owner has enough balance to not overflow withdraw
         },
     )?;
+
+    // update the contract's balance
     BALANCES.update(
         deps.storage,
         &rcpt_addr,
         |balance: Option<Uint128>| -> StdResult<_> { Ok(balance.unwrap_or_default() + amount) },
     )?;
 
+    // create a vector of attributes
     let attrs = vec![
         attr("action", "send_from"),
         attr("from", &owner),
@@ -240,7 +252,7 @@ pub fn execute_send_from(
         attr("amount", amount),
     ];
 
-    // create a send message
+    // create a receive message for the contract from the sender
     let msg = Cw20ReceiveMsg {
         sender: info.sender.into(),
         amount,
@@ -248,6 +260,7 @@ pub fn execute_send_from(
     }
     .into_cosmos_msg(contract)?;
 
+    // return an Ok response and the vector of attributes if successful
     let res = Response::new().add_message(msg).add_attributes(attrs);
     Ok(res)
 }
@@ -265,14 +278,14 @@ pub fn query_allowance(deps: Deps, owner: String, spender: String) -> StdResult<
 // unit tests below
 #[cfg(test)]
 mod tests {
-    use super::*;
-
-    use cosmwasm_std::testing::{mock_dependencies_with_balance, mock_env, mock_info};
     use cosmwasm_std::{coins, CosmosMsg, SubMsg, Timestamp, WasmMsg};
+    use cosmwasm_std::testing::{mock_dependencies_with_balance, mock_env, mock_info};
     use cw20::{Cw20Coin, TokenInfoResponse};
 
     use crate::contract::{execute, instantiate, query_balance, query_token_info};
     use crate::msg::{ExecuteMsg, InstantiateMsg};
+
+    use super::*;
 
     fn get_balance<T: Into<String>>(deps: Deps, address: T) -> Uint128 {
         query_balance(deps, address.into()).unwrap().balance
