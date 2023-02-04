@@ -1,3 +1,5 @@
+// modules used in the contract
+
 /*!
 This is a basic implementation of a cw20 contract. It implements
 the [CW20 spec](https://github.com/CosmWasm/cw-plus/blob/main/packages/cw20/README.md) and is designed to
@@ -12,7 +14,9 @@ Implements:
 
 For more information on this contract, please check out the
 [README](https://github.com/CosmWasm/cw-plus/blob/main/contracts/cw20-base/README.md).
-*/
+ */
+
+pub use crate::error::ContractError;
 
 pub mod allowances;
 pub mod contract;
@@ -21,4 +25,3 @@ mod error;
 pub mod msg;
 pub mod state;
 
-pub use crate::error::ContractError;

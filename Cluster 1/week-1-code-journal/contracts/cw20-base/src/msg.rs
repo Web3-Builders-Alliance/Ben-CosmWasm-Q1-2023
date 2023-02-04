@@ -1,11 +1,15 @@
+/*
+The msg.rs file contains all of the messages that the user, or contract can pass to the contract or itself.
+ */
+
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{StdError, StdResult, Uint128};
 use cw20::{Cw20Coin, Logo, MinterResponse};
+pub use cw20::Cw20ExecuteMsg as ExecuteMsg;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-pub use cw20::Cw20ExecuteMsg as ExecuteMsg;
-
+// instantiate marketing information and required or optional inputs
 #[cw_serde]
 pub struct InstantiateMarketingInfo {
     pub project: Option<String>,
@@ -14,6 +18,7 @@ pub struct InstantiateMarketingInfo {
     pub logo: Option<Logo>,
 }
 
+// instantiate messages and required or optional inputs
 #[cw_serde]
 #[cfg_attr(test, derive(Default))]
 pub struct InstantiateMsg {
@@ -25,6 +30,7 @@ pub struct InstantiateMsg {
     pub marketing: Option<InstantiateMarketingInfo>,
 }
 
+// implementation of InstantiateMsg
 impl InstantiateMsg {
     pub fn get_cap(&self) -> Option<Uint128> {
         self.mint.as_ref().and_then(|v| v.cap)
@@ -70,6 +76,7 @@ impl InstantiateMsg {
     }
 }
 
+// query messages
 #[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg {
@@ -122,9 +129,11 @@ pub enum QueryMsg {
     DownloadLogo {},
 }
 
+// migrate message
 #[derive(Serialize, Deserialize, JsonSchema)]
 pub struct MigrateMsg {}
 
+// tests
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -147,6 +156,7 @@ mod tests {
         assert!(!msg.has_valid_name());
     }
 
+    // validate the instatiate msg symbol
     #[test]
     fn validate_instantiatemsg_symbol() {
         // Too short

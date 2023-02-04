@@ -1,10 +1,11 @@
-// derive library features
-#[cfg(not(feature = "library"))]
-use cosmwasm_std::entry_point; // import entry_point macro from cosmwasm_std library
-use cosmwasm_std::Order::Ascending; // import the Ascending enum from the Order module in the cosmwasm_std library
+/* the contract.rs file houses all of the entry points; including instatiate, execute, migrate, and query functions.
+It also houses all of the functions associated with the marketing information of the token, such as the logo, marketing info, and token info.
+It also houses the functions associated with the token balances, allowances, and minters. Tests are at the bottom, but should probably be separated into their own tests.rs file.
+*/
+
+// import the Ascending enum from the Order module in the cosmwasm_std library
 use cosmwasm_std::{
     // import the following modules and types from the cosmwasm_std library
-    to_binary,
     Binary,
     Deps,
     DepsMut,
@@ -13,11 +14,15 @@ use cosmwasm_std::{
     Response,
     StdError,
     StdResult,
+    to_binary,
     Uint128,
 };
-
-// import the following modules and types from the cw2 library
-use cw2::set_contract_version; // import the set_contract_version function from the cw2 library
+// derive library features
+#[cfg(not(feature = "library"))]
+use cosmwasm_std::entry_point;
+// import entry_point macro from cosmwasm_std library
+use cosmwasm_std::Order::Ascending;
+// import the set_contract_version function from the cw2 library
 use cw20::{
     // import the following types from the cw20 module in the cw20 library
     BalanceResponse,
@@ -31,7 +36,8 @@ use cw20::{
     MinterResponse,
     TokenInfoResponse,
 };
-
+// import the following modules and types from the cw2 library
+use cw2::set_contract_version;
 // import ensure_from_older_version function from the cw_utils library
 use cw_utils::ensure_from_older_version;
 
@@ -40,14 +46,13 @@ use crate::allowances::{
     execute_burn_from, execute_decrease_allowance, execute_increase_allowance, execute_send_from,
     execute_transfer_from, query_allowance,
 };
-
 // import functions, types, and methods from enumerable.rs file, error.rs file, msg.rs file, and state.rs file
 use crate::enumerable::{query_all_accounts, query_owner_allowances, query_spender_allowances};
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
 use crate::state::{
-    MinterData, TokenInfo, ALLOWANCES, ALLOWANCES_SPENDER, BALANCES, LOGO, MARKETING_INFO,
-    TOKEN_INFO,
+    ALLOWANCES, ALLOWANCES_SPENDER, BALANCES, LOGO, MARKETING_INFO, MinterData, TOKEN_INFO,
+    TokenInfo,
 };
 
 // version info for migration info
@@ -717,16 +722,20 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
     Ok(Response::default())
 }
 
-// tests for the contract
+///////////////////////
+// TESTS section
+///////////////////////
+
 #[cfg(test)]
 mod tests {
+    use cosmwasm_std::{Addr, coins, CosmosMsg, from_binary, StdError, SubMsg, WasmMsg};
     use cosmwasm_std::testing::{
         mock_dependencies, mock_dependencies_with_balance, mock_env, mock_info,
     };
-    use cosmwasm_std::{coins, from_binary, Addr, CosmosMsg, StdError, SubMsg, WasmMsg};
+
+    use crate::msg::InstantiateMarketingInfo;
 
     use super::*;
-    use crate::msg::InstantiateMarketingInfo;
 
     fn get_balance<T: Into<String>>(deps: Deps, address: T) -> Uint128 {
         query_balance(deps, address.into()).unwrap().balance
@@ -1443,12 +1452,12 @@ mod tests {
     }
 
     mod migration {
-        use super::*;
-
         use cosmwasm_std::Empty;
         use cw20::{AllAllowancesResponse, AllSpenderAllowancesResponse, SpenderAllowanceInfo};
         use cw_multi_test::{App, Contract, ContractWrapper, Executor};
         use cw_utils::Expiration;
+
+        use super::*;
 
         fn cw20_contract() -> Box<dyn Contract<Empty>> {
             let contract = ContractWrapper::new(
@@ -1456,7 +1465,7 @@ mod tests {
                 crate::contract::instantiate,
                 crate::contract::query,
             )
-            .with_migrate(crate::contract::migrate);
+                .with_migrate(crate::contract::migrate);
             Box::new(contract)
         }
 

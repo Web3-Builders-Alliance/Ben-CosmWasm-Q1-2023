@@ -1,4 +1,11 @@
-//test
+/*
+The allowance.rs file incorporates all of the functions associated with increasing, decreasing, transferring,
+or burning allowances from a recipient user or contract address
+ */
+
+////////////////////////////////////////////////////////////////////////
+// Allowance functions section /////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////
 
 // import dependencies from the cosmwasm_std library
 use cosmwasm_std::{
@@ -188,7 +195,6 @@ pub fn execute_transfer_from(
 // the execute_burn_from function burns the tokens from the owner's account
 pub fn execute_burn_from(
     deps: DepsMut,
-
     env: Env,
     info: MessageInfo,
     owner: String,
@@ -196,7 +202,7 @@ pub fn execute_burn_from(
 ) -> Result<Response, ContractError> {
     let owner_addr = deps.api.addr_validate(&owner)?;
 
-    // deduct allowance before doing anything else have enough allowance
+    // deduct allowance before doing anything else have enough allowance to burn
     deduct_allowance(deps.storage, &owner_addr, &info.sender, &env.block, amount)?;
 
     // lower balance for the owner
@@ -287,7 +293,10 @@ pub fn query_allowance(deps: Deps, owner: String, spender: String) -> StdResult<
     Ok(allowance)
 }
 
-// unit tests below
+////////////////////////////////////////////////////////////////////////
+// TESTS ///////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////
+
 #[cfg(test)]
 mod tests {
     use cosmwasm_std::{coins, CosmosMsg, SubMsg, Timestamp, WasmMsg};

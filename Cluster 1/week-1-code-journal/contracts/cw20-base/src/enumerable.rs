@@ -1,16 +1,21 @@
+/*
+The enumerable.rs file holds all of the query functions and tests for allowances and accounts. Tests are at the bottom.
+ */
+
 use cosmwasm_std::{Deps, Order, StdResult};
 use cw20::{
-    AllAccountsResponse, AllAllowancesResponse, AllSpenderAllowancesResponse, AllowanceInfo,
+    AllAccountsResponse, AllAllowancesResponse, AllowanceInfo, AllSpenderAllowancesResponse,
     SpenderAllowanceInfo,
 };
+use cw_storage_plus::Bound;
 
 use crate::state::{ALLOWANCES, ALLOWANCES_SPENDER, BALANCES};
-use cw_storage_plus::Bound;
 
 // settings for pagination
 const MAX_LIMIT: u32 = 30;
 const DEFAULT_LIMIT: u32 = 10;
 
+// query allowances for a given owner
 pub fn query_owner_allowances(
     deps: Deps,
     owner: String,
@@ -36,6 +41,7 @@ pub fn query_owner_allowances(
     Ok(AllAllowancesResponse { allowances })
 }
 
+// query allowances for a given spender given options for starting block height and limit of tokens spendable
 pub fn query_spender_allowances(
     deps: Deps,
     spender: String,
@@ -61,6 +67,7 @@ pub fn query_spender_allowances(
     Ok(AllSpenderAllowancesResponse { allowances })
 }
 
+// query all accounts for spendable limits given options for starting block height and limit of tokens spendable
 pub fn query_all_accounts(
     deps: Deps,
     start_after: Option<String>,
@@ -78,16 +85,20 @@ pub fn query_all_accounts(
     Ok(AllAccountsResponse { accounts })
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////
+// Tests
+///////////////////////////////////////////////////////////////////////////////////////////
+
 #[cfg(test)]
 mod tests {
-    use super::*;
-
+    use cosmwasm_std::{coins, DepsMut, from_binary, Uint128};
     use cosmwasm_std::testing::{mock_dependencies_with_balance, mock_env, mock_info};
-    use cosmwasm_std::{coins, from_binary, DepsMut, Uint128};
     use cw20::{Cw20Coin, Expiration, TokenInfoResponse};
 
     use crate::contract::{execute, instantiate, query, query_token_info};
     use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+
+    use super::*;
 
     // this will set up the instantiation for other tests
     fn do_instantiate(mut deps: DepsMut, addr: &str, amount: Uint128) -> TokenInfoResponse {

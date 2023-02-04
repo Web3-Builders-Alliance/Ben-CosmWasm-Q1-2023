@@ -1,37 +1,41 @@
+/*
+The error.rs file contains all of the errors possible in the contract.
+ */
+
 use cosmwasm_std::StdError;
 use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq)]
 pub enum ContractError {
     #[error("{0}")]
-    Std(#[from] StdError),
+    Std(#[from] StdError), // standard error response
 
     #[error("Unauthorized")]
-    Unauthorized {},
+    Unauthorized {}, // unauthorized error response
 
     #[error("Cannot set to own account")]
-    CannotSetOwnAccount {},
+    CannotSetOwnAccount {}, // cannot set to own account error response used for limits and allowances
 
     #[error("Invalid zero amount")]
-    InvalidZeroAmount {},
+    InvalidZeroAmount {}, // invalid zero amount as input error response
 
     #[error("Allowance is expired")]
-    Expired {},
+    Expired {}, // allowance is expired error response
 
     #[error("No allowance for this account")]
-    NoAllowance {},
+    NoAllowance {}, // no allowance for this account error response
 
     #[error("Minting cannot exceed the cap")]
-    CannotExceedCap {},
+    CannotExceedCap {}, // minting cannot exceed the supply cap error response
 
     #[error("Logo binary data exceeds 5KB limit")]
-    LogoTooBig {},
+    LogoTooBig {},  // logo binary data exceeds 5KB limit error response
 
     #[error("Invalid xml preamble for SVG")]
-    InvalidXmlPreamble {},
+    InvalidXmlPreamble {}, // invalid xml preamble for SVG error response
 
     #[error("Invalid png header")]
-    InvalidPngHeader {},
+    InvalidPngHeader {}, // invalid png header error response
 
     #[error("Invalid expiration value")]
     InvalidExpiration {},
