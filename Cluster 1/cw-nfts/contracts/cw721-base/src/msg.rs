@@ -20,6 +20,7 @@ pub struct InstantiateMsg {
 /// to make this stand-alone. You will likely want to remove mint and
 /// use other control logic in any contract that inherits this.
 #[cw_serde]
+// ExecuteMsg over generic types T, and E
 pub enum ExecuteMsg<T, E> {
     /// Transfer is a base message to move a token to another account without triggering actions
     TransferNft { recipient: String, token_id: String },
@@ -27,37 +28,45 @@ pub enum ExecuteMsg<T, E> {
     /// on the receiving contract.
     SendNft {
         contract: String,
+        // contract to send nft
         token_id: String,
-        msg: Binary,
+        // token to send
+        msg: Binary, // msg to pass to the receiving contract to trigger an action on that contract
     },
     /// Allows operator to transfer / send the token from the owner's account.
     /// If expiration is set, then this allowance has a time/height limit
     Approve {
         spender: String,
+        // spender to allow all message types
         token_id: String,
-        expires: Option<Expiration>,
+        // token to allow
+        expires: Option<Expiration>, // optional expiration
     },
     /// Remove previously granted Approval
     Revoke { spender: String, token_id: String },
+    // spender to revoke approval
     /// Allows operator to transfer / send any token from the owner's account.
     /// If expiration is set, then this allowance has a time/height limit
     ApproveAll {
+        // approve all messages for a 3rd party operator
         operator: String,
-        expires: Option<Expiration>,
+        // operator to allow all message types
+        expires: Option<Expiration>, // optional expiration
     },
     /// Remove previously granted ApproveAll permission
-    RevokeAll { operator: String },
+    RevokeAll { operator: String }, // operator to revoke approval
 
     /// Mint a new NFT, can only be called by the contract minter
-    Mint(MintMsg<T>),
+    Mint(MintMsg<T>), // MintMsg over a generic type T
 
     /// Burn an NFT the sender has access to
-    Burn { token_id: String },
+    Burn { token_id: String }, // burn a token given token id
 
     /// Extension msg
-    Extension { msg: E },
+    Extension { msg: E }, // Extension for an approval msg over a generic type E
 }
 
+// MintMsg over a generic type T
 #[cw_serde]
 pub struct MintMsg<T> {
     /// Unique ID of the NFT
@@ -72,6 +81,7 @@ pub struct MintMsg<T> {
     pub extension: T,
 }
 
+// Query Messages
 #[cw_serde]
 #[derive(QueryResponses)]
 pub enum QueryMsg<Q: JsonSchema> {

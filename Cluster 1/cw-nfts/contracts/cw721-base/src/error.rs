@@ -4,17 +4,17 @@ use thiserror::Error;
 #[derive(Error, Debug, PartialEq)]
 pub enum ContractError {
     #[error("{0}")]
-    Std(#[from] StdError),
+    Std(#[from] StdError), // std error
 
     #[error("Unauthorized")]
-    Unauthorized {},
+    Unauthorized {}, // unauthorized
 
     #[error("token_id already claimed")]
-    Claimed {},
+    Claimed {}, // token_id already claimed
 
     #[error("Cannot set approval that is already expired")]
-    Expired {},
+    Expired {}, // approval expired
 
     #[error("Approval not found for: {spender}")]
-    ApprovalNotFound { spender: String },
+    ApprovalNotFound { spender: String }, // approval not found
 }
