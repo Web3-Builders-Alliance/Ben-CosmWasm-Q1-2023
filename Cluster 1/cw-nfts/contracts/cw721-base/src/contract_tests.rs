@@ -1,3 +1,5 @@
+// all tests for the entire contract held here
+
 #![cfg(test)]
 
 use cosmwasm_std::{CosmosMsg, DepsMut, Empty, from_binary, Response, to_binary, WasmMsg};

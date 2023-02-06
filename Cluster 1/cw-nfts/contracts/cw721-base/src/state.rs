@@ -6,11 +6,12 @@ use serde::{Deserialize, Serialize};
 use serde::de::DeserializeOwned;
 use std::marker::PhantomData;
 
-pub struct Cw721Contract<'a, T, C, E, Q>
+// import the cw721 base contract abstraction
+pub struct Cw721Contract<'a, T, C, E, Q> // generic types as input to the contracts, with a having a specific lifetime
     where
-        T: Serialize + DeserializeOwned + Clone,
-        Q: CustomMsg,
-        E: CustomMsg,
+        T: Serialize + DeserializeOwned + Clone, // genertic type T must be serializable, deserializable and cloneable
+        Q: CustomMsg, // generic type Q must be a custom message
+        E: CustomMsg, // generic type E must be a custom message
 {
     pub contract_info: Item<'a, ContractInfoResponse>,
     pub minter: Item<'a, Addr>,
