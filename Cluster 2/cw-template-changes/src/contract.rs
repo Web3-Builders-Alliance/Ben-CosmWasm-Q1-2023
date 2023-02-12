@@ -1,4 +1,4 @@
-use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult, to_binary};
+use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult, to_binary, Uint128};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cw2::set_contract_version;
@@ -20,7 +20,7 @@ pub fn instantiate(
 ) -> Result<Response, ContractError> {
     let state = State {
         count: msg.count,
-        owner: info.sender.clone(),
+        owner: info.sender.to_string(),
     };
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
     STATE.save(deps.storage, &state)?;
@@ -40,7 +40,7 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Increment {} => execute::increment(deps),
-        ExecuteMsg::Reset { count } => execute::reset(deps, info, count),
+        // removed the Rest { count } message
     }
 }
 
@@ -55,17 +55,7 @@ pub mod execute {
 
         Ok(Response::new().add_attribute("action", "increment"))
     }
-
-    pub fn reset(deps: DepsMut, info: MessageInfo, count: i32) -> Result<Response, ContractError> {
-        STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
-            if info.sender != state.owner {
-                return Err(ContractError::Unauthorized {});
-            }
-            state.count = count;
-            Ok(state)
-        })?;
-        Ok(Response::new().add_attribute("action", "reset"))
-    }
+    // removed the reset function from the execute module
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -126,32 +116,34 @@ mod tests {
         let value: GetCountResponse = from_binary(&res).unwrap();
         assert_eq!(18, value.count);
     }
-
-    #[test]
-    fn reset() {
-        let mut deps = mock_dependencies();
-
-        let msg = InstantiateMsg { count: 17 };
-        let info = mock_info("creator", &coins(2, "token"));
-        let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
-
-        // beneficiary can release it
-        let unauth_info = mock_info("anyone", &coins(2, "token"));
-        let msg = ExecuteMsg::Reset { count: 5 };
-        let res = execute(deps.as_mut(), mock_env(), unauth_info, msg);
-        match res {
-            Err(ContractError::Unauthorized {}) => {}
-            _ => panic!("Must return unauthorized error"),
-        }
-
-        // only the original creator can reset the counter
-        let auth_info = mock_info("creator", &coins(2, "token"));
-        let msg = ExecuteMsg::Reset { count: 5 };
-        let _res = execute(deps.as_mut(), mock_env(), auth_info, msg).unwrap();
-
-        // should now be 5
-        let res = query(deps.as_ref(), mock_env(), QueryMsg::GetCount {}).unwrap();
-        let value: GetCountResponse = from_binary(&res).unwrap();
-        assert_eq!(5, value.count);
-    }
 }
+/* commenting out the reset test
+#[test]
+fn reset() {
+    let mut deps = mock_dependencies();
+
+    let msg = InstantiateMsg { count: 17 };
+    let info = mock_info("creator", &coins(2, "token"));
+    let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+
+    // beneficiary can release it
+    let unauth_info = mock_info("anyone", &coins(2, "token"));
+    let msg = ExecuteMsg::Reset { count: 5 };
+    let res = execute(deps.as_mut(), mock_env(), unauth_info, msg);
+    match res {
+        Err(ContractError::Unauthorized {}) => {}
+        _ => panic!("Must return unauthorized error"),
+    }
+
+    // only the original creator can reset the counter
+    let auth_info = mock_info("creator", &coins(2, "token"));
+    let msg = ExecuteMsg::Reset { count: 5 };
+    let _res = execute(deps.as_mut(), mock_env(), auth_info, msg).unwrap();
+
+    // should now be 5
+    let res = query(deps.as_ref(), mock_env(), QueryMsg::GetCount {}).unwrap();
+    let value: GetCountResponse = from_binary(&res).unwrap();
+    assert_eq!(5, value.count);
+}
+}
+*/
