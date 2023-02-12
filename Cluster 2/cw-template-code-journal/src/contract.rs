@@ -8,26 +8,24 @@ use crate::msg::{ExecuteMsg, GetCountResponse, InstantiateMsg, QueryMsg};
 use crate::state::{State, STATE};
 
 // version info for migration info
-const CONTRACT_NAME: &str = "crates.io:cw-template-journal";
+const CONTRACT_NAME: &str = "crates.io:cw-template-code-journal";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
     _env: Env,
-    info: MessageInfo, // who sent the message and the message sent
+    info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     let state = State {
-        count: msg.count,   // instantiate state struct with a count and an owner
-        owner: info.sender.clone(), // clone sender of message to owner
-        // add user_count to the state struct
-        user_count: Map::new("user_count"),
+        count: msg.count,
+        owner: info.sender.clone(),
     };
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-    STATE.save(deps.storage, &state)?; // save state to storage
+    STATE.save(deps.storage, &state)?;
 
-    Ok(Response::new() // add attributes to response if successful
+    Ok(Response::new()
         .add_attribute("method", "instantiate")
         .add_attribute("owner", info.sender)
         .add_attribute("count", msg.count.to_string()))
@@ -37,11 +35,12 @@ pub fn instantiate(
 pub fn execute(
     deps: DepsMut,
     _env: Env,
-    info: MessageInfo, // who sent the message and the message sent
+    info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Increment {} => execute::increment(deps),
+        ExecuteMsg::Reset { count } => execute::reset(deps, info, count),
     }
 }
 
@@ -56,7 +55,7 @@ pub mod execute {
 
         Ok(Response::new().add_attribute("action", "increment"))
     }
-    /* remove  Reset msg functions
+
     pub fn reset(deps: DepsMut, info: MessageInfo, count: i32) -> Result<Response, ContractError> {
         STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
             if info.sender != state.owner {
@@ -66,7 +65,7 @@ pub mod execute {
             Ok(state)
         })?;
         Ok(Response::new().add_attribute("action", "reset"))
-    } */
+    }
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -136,7 +135,6 @@ mod tests {
         let info = mock_info("creator", &coins(2, "token"));
         let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
-        /* remove reset functions
         // beneficiary can release it
         let unauth_info = mock_info("anyone", &coins(2, "token"));
         let msg = ExecuteMsg::Reset { count: 5 };
@@ -144,7 +142,7 @@ mod tests {
         match res {
             Err(ContractError::Unauthorized {}) => {}
             _ => panic!("Must return unauthorized error"),
-        } */
+        }
 
         // only the original creator can reset the counter
         let auth_info = mock_info("creator", &coins(2, "token"));

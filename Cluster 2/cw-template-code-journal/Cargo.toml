@@ -1,5 +1,5 @@
 [package]
-name = "cw-template-journal"
+name = "cw-template-code-journal"
 version = "0.1.0"
 authors = ["Ben | Monarch <bgoober2@protonmail.com>"]
 edition = "2021"

@@ -78,7 +78,6 @@ docker run --rm -v "$(pwd)":/code \
 ```
 
 Or, If you're on an arm64 machine, you should use a docker image built with arm64.
-
 ```sh
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
