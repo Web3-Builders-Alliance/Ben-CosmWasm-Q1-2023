@@ -42,3 +42,5 @@ Here are a few changes that I would like to implement in the contract.
   owner/admin
 * Add a new state Map item called USER_COUNT that is a map of a user's address and the number of times that user has
   called the increment function
+
+@japarjam (sorry if this repetitive tagging is unnecessary, Jeff)
