@@ -143,17 +143,7 @@ mod tests {
 
         // we can just call .unwrap() to assert this was a success
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap(); // define a result of the instantiate function that takes mock state, mock env, mock info, and a mock msg
-        assert_eq!(0, res.messages.len());
-        assert
-        that
-        the
-        length
-        of
-        the
-        messages
-        array
-        is
-        0
+        assert_eq!(0, res.messages.len()); // assert that the length of the messages array is 0
 
         // it worked, let's query the state
         let res = query(deps.as_ref(), mock_env(), QueryMsg::GetCount {}).unwrap();
