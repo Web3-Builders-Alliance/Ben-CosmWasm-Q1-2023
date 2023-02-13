@@ -7,9 +7,10 @@ pub struct InstantiateMsg {
 
 #[cw_serde]
 pub enum ExecuteMsg {
-    Increment {},
     //  The Increment function increments the count variable
-    Reset { count: i32 }, // The Reset function resets the count variable to a new value passed in the message, which again should probably be changed to a Uint128 so a negative variable is not allowed
+    Increment {},
+    // The Reset function resets the count variable to a new value passed in the message, which again should probably be changed to a Uint128 so a negative variable is not allowed
+    Reset { count: i32 },
 }
 
 #[cw_serde]
