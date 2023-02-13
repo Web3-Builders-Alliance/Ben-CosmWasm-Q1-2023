@@ -1,5 +1,5 @@
 # Python scope for Rust concept video
-
+# y = 11
 try:
     print(y)  # this line should error as x is not defined outside the function the_answer()
 except NameError:
