@@ -9,7 +9,8 @@ use crate::state::{State, STATE};
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:cw-template-code-journal";
-const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
+// these constants are global, but not public
+const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION"); // they can be accessed by any function in the contract but not imported into another file using the contract crate
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 //////////////////////////////////////////////////////////
@@ -102,7 +103,7 @@ pub mod execute {
 ///////////////////////////////////////////////
 
 // this section defines the query messages that can be sent to the contract
-#[cfg_attr(not(feature = "library"), entry_point)]
+#[cfg_attr(not(feature = "library"), entry_point)] // these query functions and and query module are public, which means they can be accessed outside of this contract file, as well as outside of the query module itself
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> { // this line defines the query function name, its parameters, and its return type
     match msg {  // this line matches the msg sent by the user to the contract
         QueryMsg::GetCount {} => to_binary(&query::count(deps)?), //  If the GetCount message was called, then first called the to_binary method on it, and call the query function which takes state as a parameter
@@ -128,12 +129,14 @@ pub mod query {
 
 //  unit tests for the contract which I still don't really understand tbh.
 #[cfg(test)]
+// this tests module is not a public module, and is therefore not accessible outside of this file
 mod tests {
     use cosmwasm_std::{coins, from_binary};
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
 
     use super::*;
 
+    // these functions are not public, and are therefore not accessible outside of the tests module, nor the contract file.
     #[test]
     fn proper_initialization() { // name the proper_initialization function
         let mut deps = mock_dependencies(); // mock dependencies method

@@ -1,0 +1,1 @@
+/home/agent/Main\ Projects/Ben-CosmWasm-Q1-2023/Cluster\ 2/rust-concept-video-scope/target/debug/rust-concept-video-scope: /home/agent/Main\ Projects/Ben-CosmWasm-Q1-2023/Cluster\ 2/rust-concept-video-scope/src/main.rs

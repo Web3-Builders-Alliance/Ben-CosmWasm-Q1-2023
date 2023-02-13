@@ -1,5 +1,6 @@
 #[cfg(test)]
 mod tests {
+    // this is not a public module nd therefore its functions can not be imported into another file for use
     use cosmwasm_std::{Addr, Coin, Empty, Uint128};
     use cw_multi_test::{App, AppBuilder, Contract, ContractWrapper, Executor};
 
