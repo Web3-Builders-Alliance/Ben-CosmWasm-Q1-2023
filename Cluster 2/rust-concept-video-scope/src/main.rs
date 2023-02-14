@@ -20,7 +20,7 @@ fn main() {
     inner_scope(); // this calls the inner_scope function and prints the value of x. this function is callable in any scope within the main function, and could even be placed before the inner_scope function was even written
 
 // inner_inner_scope();
-}// this bracket ends the scope of the main function
+} // this bracket ends the scope of the main function
 
 
 pub const MEANING_OF_LIFE: i32 = 42; // this variable is available to all functions in the program because it is defined as a constant
