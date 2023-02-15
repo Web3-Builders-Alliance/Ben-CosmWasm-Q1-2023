@@ -1,13 +1,11 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::Coin;
 
 #[cw_serde]
 pub struct InstantiateMsg {}
 
 #[cw_serde]
 pub enum ExecuteMsg {
-    // receive the coins from the sender
-    Forward { forward_address: String }
+    ForwardTokens { forward_to_addr: String },
 }
 
 #[cw_serde]

@@ -1,4 +1,4 @@
-use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
+use cosmwasm_std::{BankMsg, Binary, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 
@@ -25,35 +25,34 @@ pub fn instantiate(
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
-    _deps: DepsMut,
-    _env: Env,
-    _info: MessageInfo,
-    _msg: ExecuteMsg,
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-        ExecuteMsg::Receive { sender, amount } => receive(deps, env, info, sender, amount),
+        ExecuteMsg::ForwardTokens { forward_to_addr } => {
+            forward_tokens(deps, env, info, forward_to_addr)
+        }
     }
-    Ok(Response::new().add_attribute("action", "execute"))
 }
 
-// write a function to forward the tokens from the sender to the receiver
 fn forward_tokens(
-    _deps: DepsMut,
+    deps: DepsMut,
     _env: Env,
     info: MessageInfo,
-    sender: String,
-    amount: Uint128,
-    forward_to_address: String,
+    forward_to_addr: String,
 ) -> Result<Response, ContractError> {
-    let forward_to_address = deps.api.addr_validate(&forward_to_address)?;
-    let res = Response::new()
+    let validated_addr = deps.api.addr_validate(&forward_to_addr)?.to_string();
+
+    let msg = BankMsg::Send {
+        to_address: validated_addr,
+        amount: info.funds,
+    };
+
+    Ok(Response::new()
         .add_attribute("action", "forward_tokens")
-        .add_message(SubMsg::new(CosmosMsg::Bank(BankMsg::Send {
-            to_address: forward_to_address.to_string(),
-            amount: info.funds,
-        }],
-})));
-Ok(res)
+        .add_message(CosmosMsg::Bank(msg)))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
