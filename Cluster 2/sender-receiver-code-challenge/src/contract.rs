@@ -13,6 +13,12 @@ const CONTRACT_NAME: &str = "crates.io:sender-receiver-code-challenge";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 */
 
+/*
+- Validate that the amount of tokens being sent in the transaction match the ones the execute message intents to deposit (given that you are passing an amount in the execute message)
+- Validate that the denom of the funds sent is uluna, considering we are gonna deploy this on terra.
+- Validate only 1 type of coin is being sent in the tx.
+ */
+
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     _deps: DepsMut,
@@ -44,6 +50,14 @@ fn forward_tokens(
     forward_to_addr: String,
 ) -> Result<Response, ContractError> {
     let validated_addr = deps.api.addr_validate(&forward_to_addr)?.to_string();
+
+    if info.funds.len() != 1 {
+        return Err(ContractError::OnlyOneCoinAllowed {});
+    }
+
+    if info.funds[0].denom != "uluna" {
+        return Err(ContractError::IncorrectDenomination { denom: "uluna".to_string() });
+    }
 
     let msg = BankMsg::Send {
         to_address: validated_addr,
