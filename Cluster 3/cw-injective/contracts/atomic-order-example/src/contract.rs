@@ -1,15 +1,17 @@
 use cosmwasm_std::{
     BankMsg, Coin, DepsMut, Env, MessageInfo, Reply, Response, StdError, SubMsg, Uint128,
 };
+// importing the necessary structures from cosmwasm_std; in this case we can see injective will be using submessages, an probably initiating messages once the original messages have returned successfully
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cw2::set_contract_version;
-use injective_cosmwasm::{
-    create_deposit_msg, create_spot_market_order_msg, create_withdraw_msg,
-    get_default_subaccount_id_for_checked_address, InjectiveMsgWrapper, InjectiveQuerier,
-    InjectiveQueryWrapper, SpotOrder,
+use injective_cosmwasm::{ // importing structures from injective's own novel library
+                          create_deposit_msg, create_spot_market_order_msg, create_withdraw_msg,
+                          get_default_subaccount_id_for_checked_address, InjectiveMsgWrapper, InjectiveQuerier,
+                          InjectiveQueryWrapper, SpotOrder,
 };
 use injective_math::FPDecimal;
+// importing from their own novel math library
 use std::str::FromStr;
 
 use crate::error::ContractError;
@@ -19,19 +21,22 @@ use crate::state::{ContractConfigState, STATE, SWAP_OPERATION_STATE, SwapCacheSt
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:atomic-order-example";
+// this is a macro that will be replaced by the name of the crate in the Cargo.toml file
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
+// this is a macro that will be replaced by the contract's version number in the Cargo.toml file
 pub const ATOMIC_ORDER_REPLY_ID: u64 = 1u64;
-pub const DEPOSIT_REPLY_ID: u64 = 2u64;
+// reply id for the submessage
+pub const DEPOSIT_REPLY_ID: u64 = 2u64; // reply id for the submessage
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
-    deps: DepsMut<InjectiveQueryWrapper>,
+    deps: DepsMut<InjectiveQueryWrapper>, // mutable state wraps a custom struct called InjectiveQueryWrapper ??
     env: Env,
     info: MessageInfo,
     msg: InstantiateMsg,
-) -> Result<Response<InjectiveMsgWrapper>, ContractError> {
+) -> Result<Response<InjectiveMsgWrapper>, ContractError> { // successful response returns another custom struct
     let querier = InjectiveQuerier::new(&deps.querier);
-    if let Some(market) = querier.query_spot_market(&msg.market_id)?.market {
+    if let Some(market) = querier.query_spot_market(&msg.market_id)?.market { // the " if let " structure coupled with the Some option type says that if there is something there (and not nothing) the destructure it and create this new object and perform the logic in the proceeding code block
         let state = ContractConfigState {
             market_id: msg.market_id,
             base_denom: market.base_denom,
