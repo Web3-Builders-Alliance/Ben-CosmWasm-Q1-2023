@@ -7,13 +7,16 @@ https://github.com/bgoober/pet-that-dog (Currently still a private repo, but wil
 Allows a user to pet a dog!
 
 Project highlights
+- People can now relax while petting a dog!
 - User receives a native token for petting the dog.
-- A token_middleware contract is deployed to gatekeep minting of native tokens.
 - A user can track their own pets count!
 - A top 10 leaderboard encourages competition.
-- People can now relax while petting a dog!
+- A token_middleware contract is deployed to gatekeep minting of native tokens.
+
 
 ## Disburser
+
+Disburse funds to a set of addresses by ownership %.
 
 https://github.com/bgoober/Disburser -- fully public and open source
 
@@ -35,6 +38,7 @@ My main project, Pet That Dog!, began as the cw-template counter contract. I the
 PTD! required a token_middleware contract, developed by Reece, in order to gatekeep minting of the native token, but I did not develop the middleware contract myself. In the process of deploying my own native token, I became a contributor to the repository here https://github.com/CosmosContracts/tokenfactory-contracts.
 
 In all, Pet That Dog! required its own contract, a token_middleware contract, and a native token.
+
 
 ---
 
