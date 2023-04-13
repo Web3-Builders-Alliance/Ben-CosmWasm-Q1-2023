@@ -56,7 +56,6 @@ The contract has no migrate entrypoint, and is meant to be immutable. If the app
 I decided to develop this contract because Benjamin R. and Juan Marchetto are helping me with the front-end UI and artwork for Pet That Dog!. Using the Disburser contract to share x/feeshare rewards seemed like a good idea. I could not find anything as simple as I had in mind, so I decided to develop the contract. I am pleased to say that even though I have not achieved 100% test coverage, everything seems to be working as intended on testnet.
 
 
-
 ---
 
 
@@ -76,14 +75,21 @@ sha256: (1549 blob) 74af9573dad2b6ae92f0c93ba1576c823ab77799cdebda73556c53388a04
 disburser_ptd_v0
 
 Contract address: juno1xdtpv263qkrxrz9cqdfm6ar6n7k78ettnfsm50lnd6j7ds2ngdcss68n72
+
 https://testnet.mintscan.io/juno-testnet/account/juno1xdtpv263qkrxrz9cqdfm6ar6n7k78ettnfsm50lnd6j7ds2ngdcss68n72
 
 Code ID: 1548
 
 sha256: a23e2d257722a4b076fe36acc063fb04585bbcfae7d5d642bf9c877f0e51a4fb
 
+Testnet owner_1 address:
+https://testnet.mintscan.io/juno-testnet/account/juno1kyvls2vh3phutgnvkxhzrwa9z0at9s23q4n0pg
 
 ### Token Middleware contract 
 
 juno14wj40ylfds89msz9n7yajlcykre5zpxzka5a9e3mqvhu2dvymsvsa0cjp6
 
+---
+## Other Notes
+
+In all, these contracts are MVPs, and much more could be done with them. Their ideas could be expanded upon greatly. If you would like to contribute, please make a PR or send me a message; I'd love to ideate.
