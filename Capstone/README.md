@@ -92,4 +92,4 @@ juno14wj40ylfds89msz9n7yajlcykre5zpxzka5a9e3mqvhu2dvymsvsa0cjp6
 ---
 ## Other Notes
 
-In all, these contracts are MVPs, and much more could be done with them. Their ideas could be expanded upon greatly. If you would like to contribute, please make a PR or send me a message; I'd love to ideate.
+In all, these contracts are MVPs, and much more could be done with them. Their ideas could be expanded upon greatly. If you would like to contribute, please make a PR or send me a message; I'd love to talk product!
